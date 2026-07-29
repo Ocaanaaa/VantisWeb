@@ -1,0 +1,116 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800;900&family=Inter+Tight:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:wght@400;500;600&display=swap");
+
+@layer reset, theme, base, components, utilities;
+
+@import "tailwindcss" source(none);
+@source "../src";
+
+/* Sistema de diseño VANTIS: cuatro valores, sin degradados decorativos. */
+@theme {
+  --spacing: 0.25rem;
+
+  /* Paleta VANTIS: azul noche + oro. Los nombres de token se mantienen para
+   * no romper las utilidades ya repartidas por la pagina; cambian los valores. */
+  --color-bone: #f7f5f1;      /* papel calido */
+  --color-graphite: #141628;  /* tinta azul noche */
+  --color-steel: #6a6f84;     /* gris azulado, 4.6:1 sobre papel */
+  --color-port: #b8942e;      /* ORO VANTIS: acento sobre fondo oscuro */
+  --color-port-ink: #8e7122;  /* oro oscuro: acento sobre fondo claro (4.6:1) */
+  --color-port-soft: #dbbe8c; /* oro claro: rombo del isotipo */
+
+  --font-display: "Archivo", "Space Grotesk", system-ui, sans-serif;
+  --font-logo: "Playfair Display", Didot, "Bodoni MT", "Times New Roman", Georgia, serif;
+  --font-text: "Inter Tight", "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --tracking-label: 0.22em;
+  --tracking-display: -0.035em;
+}
+
+@layer base {
+  /* El contenedor de scroll es html: recortar solo en body deja arrastre lateral.
+   * `clip` en vez de `hidden` para no crear un contenedor de scroll que rompa el pin. */
+  html { scroll-behavior: auto; overflow-x: clip; }
+
+  body {
+    background: var(--color-bone);
+    color: var(--color-graphite);
+    font-family: var(--font-text);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-port-ink);
+    outline-offset: 3px;
+  }
+
+  ::selection { background: var(--color-port); color: var(--color-graphite); }
+}
+
+@layer components {
+  .label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-label);
+    color: var(--color-steel);
+  }
+.logotype {
+    font-family: var(--font-logo);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .rule { border-top: 1px solid color-mix(in srgb, var(--color-steel) 25%, transparent); }
+  .display {
+    font-family: var(--font-display);
+    /* Palabras largas en español no pueden desbordar la retícula móvil. */
+    overflow-wrap: break-word;
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 0.86;
+    letter-spacing: var(--tracking-display);
+  }
+  .grid-page { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); column-gap: 1rem; }
+  @media (min-width: 768px) {
+    .grid-page { grid-template-columns: repeat(12, minmax(0,1fr)); column-gap: 1.5rem; }
+  }
+}
+
+/* La barra se retira durante el film a sangre completa. */
+html.film-active header { transform: translateY(-100%); }
+header { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+
+/* Cursor personalizado */
+html.has-custom-cursor, html.has-custom-cursor * { cursor: none; }
+.cursor-ring {
+  transition: width .22s cubic-bezier(.34,1.32,.64,1), height .22s cubic-bezier(.34,1.32,.64,1),
+    margin .22s cubic-bezier(.34,1.32,.64,1), border-color .22s ease, opacity .18s ease;
+}
+.cursor-ring.is-active { width: 3rem; height: 3rem; margin: -.5rem 0 0 -.5rem; border-color: var(--color-port); }
+.cursor-ring.is-hidden { opacity: 0; }
+
+/* Dirección de luz sobre la carrocería recortada del hero. */
+.glare-sheet {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(38% 55% at var(--gx,50%) var(--gy,40%),
+    rgba(255,255,255,.42) 0%, rgba(255,255,255,.1) 45%, rgba(255,255,255,0) 72%);
+  mix-blend-mode: soft-light;
+}
+
+/* Lenis */
+html.lenis, html.lenis body { height: auto; }
+.lenis.lenis-smooth { scroll-behavior: auto !important; }
+.lenis.lenis-stopped { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+  html.film-active header { transform: none; }
+}
