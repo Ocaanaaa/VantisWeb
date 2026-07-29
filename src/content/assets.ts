@@ -26,9 +26,6 @@ export const details: Record<string, ImageAsset> = {
   lacquer: { id: "lacquer", src: "/media/lacquer.webp", w: 2048, h: 2048, alt: "Gotas de agua sobre laca gris grafito en macro, cada gota con su reflejo especular." },
 };
 
-export const cutouts: Record<string, ImageAsset> = {
-  car: { id: "car", src: "/media/car.webp", w: 2048, h: 1152, alt: "Gran turismo gris grafito mate recortado en tres cuartos, sin fondo." },
-};
 
 /**
  * Clip de la vitrina. Se reproduce en bucle, silenciado, como fondo de la

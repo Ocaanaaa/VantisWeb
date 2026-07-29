@@ -1,11 +1,15 @@
 import { copy } from "../content";
+import { Mark } from "./Logo";
 
 /**
- * Unidades localizadas que siguen a la venta.
+ * Unidades localizadas que siguen a la venta, en formato anuncio: foto,
+ * ficha de datos y boton de contacto por unidad.
  *
- * Deliberadamente sin fotos: son unidades de terceros que rotan a diario, y
- * una foto generica al lado de un VIN concreto confunde mas que ayuda. La
- * fila lleva solo dato verificable, que es lo que decide una compra.
+ * `image` es opcional a proposito. Son coches de terceros que rotan a diario,
+ * y una foto generica junto a un precio concreto enganaria: sin foto real, la
+ * ficha muestra un marcador con el isotipo en vez de una imagen prestada.
+ * Para publicar una: deja el archivo en public/media y pon su ruta en `image`
+ * dentro de content/copy.es.ts.
  */
 export default function Available() {
   const { available } = copy;
@@ -16,28 +20,63 @@ export default function Available() {
         <h2 className="display mt-4 max-w-[14ch] text-[12vw] md:text-[4.6vw]">{available.title}</h2>
         <p className="mt-6 max-w-[62ch] text-[15px] leading-[1.5] text-steel">{available.body}</p>
 
-        <ul className="mt-14 border-t border-steel/25">
+        <ul className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {available.items.map((u) => (
-            <li key={u.id} className="rule group border-t-0 border-b border-steel/25 py-6 md:py-7">
-              <div className="grid grid-cols-4 items-baseline gap-x-4 gap-y-3 md:grid-cols-12 md:gap-x-6">
-                <p className="col-span-4 md:col-span-4">
-                  <span className="mr-3 font-mono text-[10px] uppercase tracking-label text-steel">{u.id}</span>
-                  <span className="display text-[19px] md:text-[21px]">{u.model}</span>
-                </p>
+            <li key={u.id} className="group flex flex-col border border-steel/25 bg-bone transition-colors duration-300 hover:border-graphite">
+              <div className="relative aspect-[4/3] w-full overflow-hidden bg-graphite">
+                {u.image ? (
+                  <img
+                    src={u.image}
+                    alt={u.model}
+                    loading="lazy"
+                    decoding="async"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
+                ) : (
+                  <div className="flex h-full w-full flex-col items-center justify-center gap-3">
+                    <Mark className="h-9 w-10 opacity-40" />
+                    <span className="font-mono text-[10px] uppercase tracking-label text-bone/35">
+                      {available.photoPending}
+                    </span>
+                  </div>
+                )}
+                <span className="absolute left-0 top-0 bg-graphite px-3 py-2 font-mono text-[10px] tracking-[0.12em] text-bone">
+                  {u.id}
+                </span>
+                <span
+                  className={`absolute right-0 top-0 px-3 py-2 font-mono text-[10px] uppercase tracking-label ${
+                    u.reserved ? "bg-steel/90 text-bone" : "bg-port text-graphite"
+                  }`}
+                >
+                  {u.reserved ? available.status.reserved : available.status.available}
+                </span>
+              </div>
 
-                <Cell className="md:col-span-1" label={available.labels.year} value={u.year} />
-                <Cell className="md:col-span-2" label={available.labels.km} value={u.km} />
-                <Cell className="md:col-span-2" label={available.labels.market} value={u.market} />
-                <Cell className="md:col-span-2" label={available.labels.price} value={u.price} strong />
+              <div className="flex flex-1 flex-col p-6">
+                <h3 className="display text-[19px] leading-tight md:text-[21px]">{u.model}</h3>
 
-                <p className="col-span-4 md:col-span-1 md:text-right">
-                  <span
-                    className={`inline-block border px-2 py-1 font-mono text-[10px] uppercase tracking-label ${
-                      u.reserved ? "border-steel/40 text-steel" : "border-port-ink/50 text-port-ink"
-                    }`}>
-                    {u.reserved ? available.status.reserved : available.status.available}
+                <dl className="mt-5 border-t border-steel/25">
+                  <Row k={available.labels.year} v={u.year} />
+                  <Row k={available.labels.km} v={u.km} />
+                  <Row k={available.labels.market} v={u.market} />
+                </dl>
+
+                {/* mt-auto empuja el bloque de precio y boton al fondo, asi
+                    quedan alineados aunque el titulo ocupe una o dos lineas. */}
+                <p className="mt-auto flex items-baseline justify-between gap-3 pt-5">
+                  <span className="font-mono text-[9px] uppercase tracking-label text-steel">
+                    {available.labels.price}
                   </span>
+                  <span className="display text-[22px] text-graphite">{u.price}</span>
                 </p>
+
+                <a
+                  href="#encargo"
+                  className="mt-6 inline-flex items-center justify-between gap-3 border border-graphite px-5 py-3.5 font-mono text-[10px] uppercase tracking-label text-graphite transition-colors duration-300 hover:bg-graphite hover:text-bone"
+                >
+                  {available.contact}
+                  <span className="inline-block h-px w-6 bg-port-ink transition-all duration-300 group-hover:w-9" />
+                </a>
               </div>
             </li>
           ))}
@@ -45,7 +84,10 @@ export default function Available() {
 
         <div className="mt-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <p className="max-w-[62ch] font-mono text-[11px] leading-[1.6] text-steel">{available.note}</p>
-          <a href="#encargo" className="group inline-flex shrink-0 items-center gap-3 bg-graphite px-6 py-4 font-mono text-[11px] uppercase tracking-label text-bone transition-transform duration-300 hover:-translate-y-0.5">
+          <a
+            href="#encargo"
+            className="group inline-flex shrink-0 items-center gap-3 bg-graphite px-6 py-4 font-mono text-[11px] uppercase tracking-label text-bone transition-transform duration-300 hover:-translate-y-0.5"
+          >
             {available.cta}
             <span className="inline-block h-px w-6 bg-port transition-all duration-300 group-hover:w-9" />
           </a>
@@ -55,11 +97,11 @@ export default function Available() {
   );
 }
 
-function Cell({ label, value, className = "", strong = false }: { label: string; value: string; className?: string; strong?: boolean }) {
+function Row({ k, v }: { k: string; v: string }) {
   return (
-    <p className={`col-span-2 ${className}`}>
-      <span className="block font-mono text-[9px] uppercase tracking-label text-steel">{label}</span>
-      <span className={`mt-1 block text-[14px] ${strong ? "text-graphite" : "text-steel"}`}>{value}</span>
-    </p>
+    <div className="flex items-baseline justify-between gap-4 border-b border-steel/25 py-2.5">
+      <dt className="font-mono text-[9px] uppercase tracking-label text-steel">{k}</dt>
+      <dd className="font-mono text-[12px] text-graphite">{v}</dd>
+    </div>
   );
 }
