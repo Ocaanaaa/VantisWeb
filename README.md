@@ -17,16 +17,27 @@ npm run typecheck
 
 ## Despliegue en Vercel
 
-Importa el repositorio en Vercel y despliega. `vercel.json` ya lleva la
-configuración:
+**Add New → Project → Import este repositorio → Deploy.** No cambies nada en
+la pantalla de importación:
 
-- `npm run build` genera `dist/client` (estáticos) y `dist/server/server.js`
-  (un handler `fetch` estándar).
-- `api/index.mjs` es el puente: Vercel no despliega ese handler por sí solo.
-- Los `rewrites` mandan a la función todo lo que no sea un archivo estático,
-  que Vercel resuelve antes por sistema de archivos.
+| Ajuste | Valor |
+|---|---|
+| Framework Preset | el que detecte solo (TanStack Start) |
+| Root Directory | **vacío** — el proyecto está en la raíz del repo |
+| Build Command | por defecto (`npm run build`) |
+| Output Directory | por defecto |
+| Install Command | por defecto (`npm install`) |
+| Variables de entorno | ninguna |
 
-No hace falta ninguna variable de entorno para que la web funcione.
+Vercel reconoce TanStack Start y se encarga del renderizado en servidor por su
+cuenta. **No añadas un `vercel.json`**: declarar `framework: null` desactiva esa
+detección y rompe el SSR — pasó, y costó un rato encontrarlo.
+
+Con **Root Directory** ocurre lo mismo al revés: si apunta a una subcarpeta que
+no existe, el build muere en un segundo con
+`The specified Root Directory does not exist`.
+
+Después de importar, cada push a `main` redespliega solo.
 
 ## Estructura
 
