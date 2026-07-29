@@ -85,6 +85,14 @@ await cp("dist/client", `${OUT}/static`, { recursive: true });
 await cp("dist/server", `${FUNC}/server`, { recursive: true });
 await writeFile(`${FUNC}/index.mjs`, LAUNCHER);
 
+/**
+ * La funcion se despliega como carpeta aislada: ahi arriba no queda el
+ * package.json del proyecto. Sin este, Node lee los .js del bundle -- que son
+ * ESM -- como CommonJS y la funcion muere al cargarse, antes de ejecutar una
+ * sola linea del lanzador (FUNCTION_INVOCATION_FAILED, sin traza util).
+ */
+await writeFile(`${FUNC}/package.json`, JSON.stringify({ type: "module" }, null, 2));
+
 await writeFile(
   `${FUNC}/.vc-config.json`,
   JSON.stringify(
