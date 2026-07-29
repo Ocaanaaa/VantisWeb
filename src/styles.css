@@ -114,3 +114,47 @@ html.lenis, html.lenis body { height: auto; }
   }
   html.film-active header { transform: none; }
 }
+
+/* --- Barra de navegación ---------------------------------------------------
+ * Todo se interpola con --nav-p, que Nav.tsx escribe en el propio elemento
+ * (0 en lo alto de la portada, 1 ya desplazado). Así la barra se opaca poco a
+ * poco siguiendo el scroll, en lugar de conmutar de golpe.
+ *
+ * El valor lo escribe JS directamente en el nodo, sin pasar por el estado de
+ * React: si no, habría un render por cada fotograma de scroll. */
+.nav-shell {
+  --nav-p: 0;
+
+  /* Tono base del texto: hueso arriba, tinta abajo. Va en sentido contrario al
+   * fondo, así que el contraste se mantiene durante todo el recorrido. */
+  --nav-fg: color-mix(in oklab, var(--color-bone), var(--color-graphite) calc(var(--nav-p) * 100%));
+
+  /* Tono apagado, para enlaces y bordes. Sigue al anterior y solo en el último
+   * cuarto se aclara hacia el gris de reposo.
+   *
+   * Si fuese directo de hueso a gris, hacia el 75% del recorrido coincidiría
+   * con el fondo semiopaco y los enlaces se volverían ilegibles: gris medio
+   * sobre gris medio. Pasa antes por la tinta justamente para evitar eso. */
+  --nav-fg-muted: color-mix(
+    in oklab,
+    var(--nav-fg),
+    var(--color-steel) calc(max(0, var(--nav-p) - 0.75) * 400%)
+  );
+
+  background: color-mix(in srgb, var(--color-bone) calc(var(--nav-p) * 88%), transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg-muted) calc(var(--nav-p) * 25%), transparent);
+  -webkit-backdrop-filter: blur(calc(var(--nav-p) * 12px));
+  backdrop-filter: blur(calc(var(--nav-p) * 12px));
+}
+
+/* Logotipo e icono del menú. */
+.nav-ink { color: var(--nav-fg); }
+
+/* Enlaces de sección. */
+.nav-link { color: var(--nav-fg-muted); }
+.nav-link:hover {
+  color: color-mix(in oklab, var(--color-port), var(--color-graphite) calc(var(--nav-p) * 100%));
+}
+
+/* Borde del botón de menú, con su propia transparencia. */
+.nav-edge { border-color: color-mix(in srgb, var(--nav-fg-muted) 45%, transparent); }

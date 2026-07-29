@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { copy } from "../content";
 import Logo from "./Logo";
 
@@ -9,19 +9,35 @@ import Logo from "./Logo";
  * En movil los enlaces no caben en la barra, asi que van en un panel a
  * pantalla completa.
  */
-/** Umbral en px. Corto a proposito: basta un gesto de scroll para que la barra
- *  se vuelva opaca, en vez de esperar a que pase media portada. */
-const SOLID_FROM = 32;
+/** Recorrido en px sobre el que la barra pasa de transparente a opaca. Corto a
+ *  proposito: el cambio acompana al primer gesto de scroll, no a media portada. */
+const RAMP = 140;
 export default function Nav() {
   const { nav } = copy;
-  const [solid, setSolid] = useState(false);
+  const header = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
+  // El relleno del boton se invierte (claro sobre oscuro -> oscuro sobre claro).
+  // Eso si conmuta, porque interpolarlo pasaria por un gris donde el texto
+  // desapareceria. El resto de la barra si va progresivo.
+  const [solid, setSolid] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setSolid(window.scrollY > SOLID_FROM);
-    onScroll();
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const p = Math.min(1, window.scrollY / RAMP);
+      // Se escribe en el nodo, no en el estado: un render por fotograma de
+      // scroll seria tirar trabajo a la basura.
+      header.current?.style.setProperty("--nav-p", String(p));
+      setSolid(p >= 0.5);
+    };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(update); };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) cancelAnimationFrame(frame);
+    };
   }, []);
 
   // Con el panel abierto, el fondo no debe poder desplazarse.
@@ -37,28 +53,21 @@ export default function Nav() {
     };
   }, [open]);
 
-  // Sobre la portada el texto va claro; con la barra solida, oscuro.
   const onDark = !solid;
-  const linkCls = onDark
-    ? "font-mono text-[10px] uppercase tracking-label text-bone/70 transition-colors hover:text-port"
-    : "font-mono text-[10px] uppercase tracking-label text-steel transition-colors hover:text-graphite";
+  const linkCls = "nav-link font-mono text-[10px] uppercase tracking-label";
   // En movil comparte fila con el boton de menu: etiqueta corta y menos cuerpo.
   const ctaBase =
     "inline-flex items-center gap-2 px-3 py-2 font-mono text-[9px] uppercase tracking-label transition-transform duration-300 hover:-translate-y-0.5 md:gap-2 md:px-5 md:py-2.5 md:text-[10px]";
-  const ctaCls = `${ctaBase} ${onDark ? "bg-bone text-graphite" : "bg-graphite text-bone"}`;
+  const ctaCls = `${ctaBase} transition-colors ${onDark ? "bg-bone text-graphite" : "bg-graphite text-bone"}`;
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${
-        solid ? "border-b border-steel/20 bg-bone/85 backdrop-blur-md" : "border-b border-transparent bg-transparent"
-      }`}
-    >
+    <header ref={header} className="nav-shell fixed inset-x-0 top-0 z-50">
       <a href="#proceso" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-graphite focus:px-4 focus:py-2 focus:font-mono focus:text-[11px] focus:text-bone">
         Saltar al contenido
       </a>
 
       <nav aria-label="Principal" className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-4 md:px-10 md:py-5">
-        <a href="#inicio" className={`flex items-baseline ${onDark ? "text-bone" : "text-graphite"}`}>
+        <a href="#inicio" className="nav-ink flex items-baseline">
           <Logo className="text-[15px] md:text-[17px]" />
         </a>
 
@@ -85,9 +94,7 @@ export default function Nav() {
             aria-label={nav.menuOpen}
             aria-expanded={open}
             aria-controls="menu-movil"
-            className={`inline-flex h-10 w-10 items-center justify-center border transition-colors md:hidden ${
-              onDark ? "border-bone/30 text-bone" : "border-steel/40 text-graphite"
-            }`}
+            className="nav-edge nav-ink inline-flex h-10 w-10 items-center justify-center border md:hidden"
           >
             <span aria-hidden="true" className="flex w-4 flex-col gap-[3px]">
               <span className="block h-px w-full bg-current" />
