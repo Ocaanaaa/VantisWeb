@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { copy } from "../content";
 import { film } from "../content/assets";
+import { useBackgroundVideo } from "../lib/backgroundVideo";
 
 /**
  * Vitrina. El clip va de fondo, en bucle y silenciado, con el mensaje encima.
@@ -26,23 +27,7 @@ export default function Showreel() {
     return () => mq.removeEventListener("change", sync);
   }, []);
 
-  /* No basta con `autoPlay`: segun la politica de reproduccion del navegador
-   * el clip puede quedarse en pausa aunque este silenciado. Lo arrancamos a
-   * mano cuando la seccion entra en pantalla, y lo paramos al salir para no
-   * decodificar video que nadie ve. */
-  useEffect(() => {
-    const el = video.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) void el.play().catch(() => {});
-        else el.pause();
-      },
-      { threshold: 0.15 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [reduced]);
+  useBackgroundVideo(video, reduced === false);
 
   return (
     <section id="film" aria-label={showreel.eyebrow} className="relative isolate overflow-hidden bg-graphite text-bone">

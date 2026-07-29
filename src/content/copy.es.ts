@@ -15,6 +15,7 @@ export const copy = {
       { id: "equipo", label: "Equipo" },
     ],
     cta: "Hacer un encargo",
+    ctaShort: "Encargo",
     menuOpen: "Menú",
     menuClose: "Cerrar",
   },

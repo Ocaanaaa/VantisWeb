@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { copy, film } from "../content";
 import { useMotion, finePointer } from "../lib/motion";
+import { useBackgroundVideo } from "../lib/backgroundVideo";
 
 /**
  * Portada con el clip de fondo, en bucle y silenciado, y la tipografia encima.
@@ -11,9 +12,8 @@ import { useMotion, finePointer } from "../lib/motion";
  * (5,9:1 sobre azul noche) en vez del oro oscuro, que es justo al reves --
  * ese solo se usa sobre fondo claro.
  *
- * El video no lleva `autoPlay` a secas: segun la politica del navegador puede
- * quedarse en pausa aunque este silenciado. Se arranca por observer al entrar
- * en pantalla y se pausa al salir, para no decodificar video que nadie ve.
+ * El arranque del clip lo lleva useBackgroundVideo: en movil `autoPlay` a secas
+ * no basta y hace falta reintentar. Ahi esta explicado el porque.
  */
 export default function Hero() {
   const { hero } = copy;
@@ -45,19 +45,7 @@ export default function Hero() {
     return () => window.removeEventListener("pointermove", onMove);
   }, [reduced, resolved]);
 
-  useEffect(() => {
-    const el = video.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) void el.play().catch(() => {});
-        else el.pause();
-      },
-      { threshold: 0.1 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [reduced, resolved]);
+  useBackgroundVideo(video, resolved && !reduced);
 
   return (
     <section
@@ -77,7 +65,7 @@ export default function Hero() {
             muted
             loop
             playsInline
-            preload="metadata"
+            preload="auto"
             aria-hidden="true"
             className="h-full w-full object-cover"
           />

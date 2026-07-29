@@ -40,9 +40,10 @@ export default function Nav() {
   const linkCls = onDark
     ? "font-mono text-[10px] uppercase tracking-label text-bone/70 transition-colors hover:text-port"
     : "font-mono text-[10px] uppercase tracking-label text-steel transition-colors hover:text-graphite";
-  const ctaCls = onDark
-    ? "inline-flex items-center gap-2 bg-bone px-4 py-2.5 font-mono text-[10px] uppercase tracking-label text-graphite transition-transform duration-300 hover:-translate-y-0.5 md:px-5"
-    : "inline-flex items-center gap-2 bg-graphite px-4 py-2.5 font-mono text-[10px] uppercase tracking-label text-bone transition-transform duration-300 hover:-translate-y-0.5 md:px-5";
+  // En movil comparte fila con el boton de menu: etiqueta corta y menos cuerpo.
+  const ctaBase =
+    "inline-flex items-center gap-2 px-3 py-2 font-mono text-[9px] uppercase tracking-label transition-transform duration-300 hover:-translate-y-0.5 md:gap-2 md:px-5 md:py-2.5 md:text-[10px]";
+  const ctaCls = `${ctaBase} ${onDark ? "bg-bone text-graphite" : "bg-graphite text-bone"}`;
 
   return (
     <header
@@ -69,8 +70,10 @@ export default function Nav() {
 
         <div className="flex items-center gap-3">
           <a href="#encargo" className={ctaCls}>
-            {nav.cta}
-            <span className="inline-block h-px w-4 bg-port" />
+            <span className="md:hidden">{nav.ctaShort}</span>
+            <span className="hidden md:inline">{nav.cta}</span>
+            {/* La rayita solo desde md: en movil roba ancho sin aportar. */}
+            <span className="hidden h-px w-4 bg-port md:inline-block" />
           </a>
 
           {/* Solo en movil: los enlaces no caben en la barra. */}
