@@ -29,13 +29,25 @@ la pantalla de importación:
 | Install Command | por defecto (`npm install`) |
 | Variables de entorno | ninguna |
 
-Vercel reconoce TanStack Start y se encarga del renderizado en servidor por su
-cuenta. **No añadas un `vercel.json`**: declarar `framework: null` desactiva esa
-detección y rompe el SSR — pasó, y costó un rato encontrarlo.
+### Cómo se despliega
 
-Con **Root Directory** ocurre lo mismo al revés: si apunta a una subcarpeta que
-no existe, el build muere en un segundo con
-`The specified Root Directory does not exist`.
+`npm run build` hace dos cosas: `vite build` y luego
+`scripts/vercel-build.mjs`, que escribe `.vercel/output` en el formato de la
+[Build Output API](https://vercel.com/docs/build-output-api/v3). Vercel usa esa
+carpeta siempre que exista, así que **el despliegue no depende de que reconozca
+el framework**.
+
+Esto no es opcional: entre `dist/client` y `dist/server` no hay `index.html`,
+porque la página se renderiza en cada petición. Si Vercel trata el proyecto como
+un sitio estático, sirve `dist/client`, no encuentra `index.html` y devuelve
+**404 en la raíz**. Es lo que pasaba antes de añadir ese paso.
+
+Dos cosas que rompieron intentos anteriores y conviene no repetir:
+
+- **No añadas un `vercel.json`** con `framework: null`: desactiva la detección
+  y deja el SSR sin ruta.
+- **Root Directory apuntando a una subcarpeta** que no existe: el build muere
+  en un segundo con `The specified Root Directory does not exist`.
 
 Después de importar, cada push a `main` redespliega solo.
 
