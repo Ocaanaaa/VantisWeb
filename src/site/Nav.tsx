@@ -3,20 +3,22 @@ import { copy } from "../content";
 import Logo from "./Logo";
 
 /**
- * Barra fija con dos estados: sobre la portada (fondo oscuro, texto en hueso)
- * y ya desplazada (fondo papel, texto en tinta). El cambio ocurre al pasar el
- * 60% de la primera pantalla, que es donde acaba el video.
+ * Barra fija con dos estados: en lo alto de la portada va transparente sobre el
+ * video, y en cuanto empieza el scroll pasa a fondo papel con texto en tinta.
  *
  * En movil los enlaces no caben en la barra, asi que van en un panel a
  * pantalla completa.
  */
+/** Umbral en px. Corto a proposito: basta un gesto de scroll para que la barra
+ *  se vuelva opaca, en vez de esperar a que pase media portada. */
+const SOLID_FROM = 32;
 export default function Nav() {
   const { nav } = copy;
   const [solid, setSolid] = useState(false);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setSolid(window.scrollY > window.innerHeight * 0.6);
+    const onScroll = () => setSolid(window.scrollY > SOLID_FROM);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
