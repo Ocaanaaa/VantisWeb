@@ -61,15 +61,32 @@ funcione antes de montar nada.
 
 1. En Vercel: **Storage → Create Database → Postgres**. Al vincularla al
    proyecto, Vercel inyecta `POSTGRES_URL` solo.
-2. En **Settings → Environment Variables**, añade `ADMIN_TOKEN` con una
+2. También en **Storage → Create → Blob**, para las fotos. Al vincularlo
+   inyecta `BLOB_READ_WRITE_TOKEN` solo.
+3. En **Settings → Environment Variables**, añade `ADMIN_TOKEN` con una
    contraseña larga que te inventes.
-3. Redespliega.
+4. Redespliega.
 
 La tabla se crea sola en la primera consulta.
 
 Después, en `/interno/publicar`: pegas el enlace y el texto del anuncio,
-se rellena la ficha, la revisas y publicas. Las unidades guardadas como
-borrador no salen en la web.
+se rellena la ficha, subes las fotos, la revisas y publicas. Las unidades
+guardadas como borrador no salen en la web.
+
+### Las fotos
+
+Se eligen desde el panel y **se convierten a WebP en el navegador** antes de
+subirse: lado mayor a 2048 px y calidad 0,8. Una foto de móvil de 8 MB acaba
+en unos cientos de KB, así que subir desde el coche con datos móviles no es un
+problema. Es el mismo tratamiento que tienen las imágenes de `public/media`.
+
+La primera foto de la lista es la principal —la que sale en la home y en las
+tarjetas de compartir—; el resto forman la galería de la ficha. Se puede
+reordenar y quitar antes de publicar. Sin ninguna foto, la ficha muestra el
+marcador de foto pendiente.
+
+En local, define `MEDIA_DIR=public/media/subidas` y las fotos van a disco en
+vez de a Blob. Esa carpeta está en `.gitignore`.
 
 > **Estas rutas internas no tienen usuarios ni sesiones.** `ADMIN_TOKEN` es un
 > secreto compartido que impide escrituras de fuera, y `/interno/*` es

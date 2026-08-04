@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiSubirRouteImport } from './routes/api.subir'
 import { Route as ApiUnidadesRouteImport } from './routes/api.unidades'
 import { Route as InternoPublicarRouteImport } from './routes/interno.publicar'
 import { Route as UnidadesSlugRouteImport } from './routes/unidades.$slug'
@@ -29,6 +30,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiSubirRoute = ApiSubirRouteImport.update({
+  id: '/api/subir',
+  path: '/api/subir',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiUnidadesRoute = ApiUnidadesRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
   '/interno/publicar': typeof InternoPublicarRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
   '/interno/publicar': typeof InternoPublicarRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
   '/interno/publicar': typeof InternoPublicarRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/subir'
     | '/api/unidades'
     | '/interno/publicar'
     | '/unidades/$slug'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/subir'
     | '/api/unidades'
     | '/interno/publicar'
     | '/unidades/$slug'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/subir'
     | '/api/unidades'
     | '/interno/publicar'
     | '/unidades/$slug'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiSubirRoute: typeof ApiSubirRoute
   ApiUnidadesRoute: typeof ApiUnidadesRoute
   InternoPublicarRoute: typeof InternoPublicarRoute
   UnidadesSlugRoute: typeof UnidadesSlugRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/subir': {
+      id: '/api/subir'
+      path: '/api/subir'
+      fullPath: '/api/subir'
+      preLoaderRoute: typeof ApiSubirRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/unidades': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiSubirRoute: ApiSubirRoute,
   ApiUnidadesRoute: ApiUnidadesRoute,
   InternoPublicarRoute: InternoPublicarRoute,
   UnidadesSlugRoute: UnidadesSlugRoute,

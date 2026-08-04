@@ -64,11 +64,25 @@ function limpiar(s: string): string {
   return s.replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Miles siempre separados.
+ *
+ * `useGrouping: "always"` es de ES2023 y hace falta porque el modo por defecto
+ * de es-ES deja las cifras de cuatro dígitos sin punto: 9500 en vez de 9.500.
+ * La librería de tipos de TypeScript todavía lo declara `boolean`, así que el
+ * cast es para el compilador, no para el navegador.
+ */
+const AGRUPADO = { useGrouping: "always" } as unknown as Intl.NumberFormatOptions;
+
+function agrupar(n: number): string {
+  return new Intl.NumberFormat("es-ES", AGRUPADO).format(n);
+}
+
 /** 46.900 € / EUR 46900 / 46 900,- → "46.900 €" */
 function normalizarPrecio(bruto: string): string {
   const n = Number(bruto.replace(/[^\d]/g, ""));
   if (!Number.isFinite(n) || n <= 0) return "";
-  return new Intl.NumberFormat("es-ES", { useGrouping: "always" }).format(n) + " €";
+  return agrupar(n) + " €";
 }
 
 export function parsearAnuncio(texto: string, url = ""): FichaExtraida {
@@ -83,7 +97,7 @@ export function parsearAnuncio(texto: string, url = ""): FichaExtraida {
   // Kilometraje: la cifra seguida de km, con separadores de miles.
   const km = t.match(/([0-9][0-9.\s]{2,12})\s*km\b/i);
   const kmTexto = km
-    ? new Intl.NumberFormat("es-ES", { useGrouping: "always" }).format(Number(km[1].replace(/[^\d]/g, ""))) + " km"
+    ? agrupar(Number(km[1].replace(/[^\d]/g, ""))) + " km"
     : "";
 
   // Precio: el primer importe con símbolo de euro y al menos cuatro cifras.

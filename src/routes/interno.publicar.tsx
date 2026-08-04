@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { parsearAnuncio, generarSlug, type FichaExtraida } from "../lib/parsearAnuncio";
+import { comprimirImagen, type FotoLista } from "../lib/comprimirImagen";
 import type { Unidad } from "../lib/unidades";
 
 /**
@@ -25,8 +26,10 @@ export const Route = createFileRoute("/interno/publicar")({
 
 const VACIA = {
   id: "", modelo: "", anio: "", km: "", mercado: "", precio: "",
-  resumen: "", imagen: "", galeria: "", equipamiento: "",
+  resumen: "", equipamiento: "",
 };
+
+const kb = (n: number) => (n < 1048576 ? `${Math.round(n / 1024)} KB` : `${(n / 1048576).toFixed(1)} MB`);
 
 function Publicar() {
   const [token, setToken] = useState("");
@@ -38,6 +41,52 @@ function Publicar() {
   const [reservada, setReservada] = useState(false);
   const [estado, setEstado] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
+
+  // Fotos ya alojadas, en orden. La primera es la principal de la ficha.
+  const [fotos, setFotos] = useState<string[]>([]);
+  // Seleccionadas y comprimidas, pendientes de subir.
+  const [pendientes, setPendientes] = useState<FotoLista[]>([]);
+  const [subiendo, setSubiendo] = useState(false);
+  const [avisoFoto, setAvisoFoto] = useState<string | null>(null);
+
+  const elegirFotos = async (lista: FileList | null) => {
+    if (!lista?.length) return;
+    setAvisoFoto(null);
+    try {
+      const listas = await Promise.all(Array.from(lista).map(comprimirImagen));
+      setPendientes((prev) => [...prev, ...listas]);
+    } catch (e) {
+      setAvisoFoto(e instanceof Error ? e.message : "No se han podido leer las imágenes");
+    }
+  };
+
+  const subirFotos = async () => {
+    if (!pendientes.length) return;
+    setSubiendo(true);
+    setAvisoFoto(null);
+    const cuerpo = new FormData();
+    cuerpo.set("referencia", f.id.trim() || f.modelo.trim() || "unidad");
+    for (const p of pendientes) cuerpo.append("foto", p.archivo);
+    try {
+      const res = await fetch("/api/subir", {
+        method: "POST",
+        headers: { "x-vantis-token": token },
+        body: cuerpo,
+      });
+      const datos = await res.json();
+      if (!res.ok) {
+        setAvisoFoto(datos.error ?? `Error ${res.status}`);
+      } else {
+        setFotos((prev) => [...prev, ...datos.urls]);
+        for (const p of pendientes) URL.revokeObjectURL(p.vistaPrevia);
+        setPendientes([]);
+      }
+    } catch (e) {
+      setAvisoFoto(e instanceof Error ? e.message : "Fallo de red al subir");
+    } finally {
+      setSubiendo(false);
+    }
+  };
 
   const analizar = () => {
     const r = parsearAnuncio(texto, url);
@@ -68,8 +117,8 @@ function Publicar() {
       market: f.mercado.trim(),
       price: f.precio.trim(),
       reserved: reservada,
-      image: f.imagen.trim() || null,
-      gallery: f.galeria.split("\n").map((s) => s.trim()).filter(Boolean),
+      image: fotos[0] ?? null,
+      gallery: fotos,
       summary: f.resumen.trim(),
       spec,
       equipment: f.equipamiento.split("\n").map((s) => s.trim()).filter(Boolean),
@@ -173,13 +222,81 @@ function Publicar() {
                 className="w-full resize-y border border-steel/30 bg-transparent px-4 py-3 font-mono text-[12px] leading-[1.5] text-graphite focus:border-graphite focus:outline-none" />
             </label>
 
-            <Campo etiqueta="Foto principal (ruta propia)" valor={f.imagen} onChange={(v) => setF({ ...f, imagen: v })}
-              ayuda="Ej. /media/d119-1.webp. Vacío = marcador de foto pendiente." />
-            <label className="block">
-              <span className="label mb-2 block">Galería (una ruta por línea)</span>
-              <textarea value={f.galeria} onChange={(e) => setF({ ...f, galeria: e.target.value })} rows={3}
-                className="w-full resize-y border border-steel/30 bg-transparent px-4 py-3 font-mono text-[12px] text-graphite focus:border-graphite focus:outline-none" />
-            </label>
+            {/* --- Fotos --- */}
+            <div className="border border-steel/25 p-4">
+              <p className="label">Fotos de la unidad</p>
+              <p className="mt-2 font-mono text-[10px] leading-[1.7] text-steel">
+                Solo fotos propias o cedidas por el vendedor. Se convierten a WebP y se
+                reducen a 2048 px en tu navegador antes de subirse. La primera es la
+                principal; sin ninguna, la ficha sale con el marcador de foto pendiente.
+              </p>
+
+              <input
+                type="file" accept="image/*" multiple
+                onChange={(e) => { void elegirFotos(e.target.files); e.target.value = ""; }}
+                className="mt-4 block w-full font-mono text-[11px] text-steel file:mr-4 file:border-0 file:bg-graphite file:px-4 file:py-2.5 file:font-mono file:text-[10px] file:uppercase file:tracking-label file:text-bone"
+              />
+
+              {pendientes.length ? (
+                <div className="mt-4">
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {pendientes.map((p, i) => (
+                      <figure key={p.vistaPrevia} className="relative">
+                        <img src={p.vistaPrevia} alt="" className="aspect-[4/3] w-full object-cover" />
+                        <figcaption className="mt-1 font-mono text-[9px] leading-tight text-steel">
+                          {kb(p.original)} → {kb(p.archivo.size)}
+                        </figcaption>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            URL.revokeObjectURL(p.vistaPrevia);
+                            setPendientes((prev) => prev.filter((_, j) => j !== i));
+                          }}
+                          className="absolute right-0 top-0 bg-graphite px-2 py-1 font-mono text-[10px] text-bone"
+                          aria-label="Quitar"
+                        >
+                          ×
+                        </button>
+                      </figure>
+                    ))}
+                  </div>
+                  <button type="button" onClick={subirFotos} disabled={subiendo || !token.trim()}
+                    className="mt-3 bg-port px-5 py-3 font-mono text-[10px] uppercase tracking-label text-graphite disabled:opacity-40">
+                    {subiendo ? "Subiendo…" : `Subir ${pendientes.length} foto${pendientes.length > 1 ? "s" : ""}`}
+                  </button>
+                  {!token.trim() ? (
+                    <p className="mt-2 font-mono text-[10px] text-steel">Hace falta el token para subir.</p>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {fotos.length ? (
+                <ul className="mt-4 flex flex-col gap-2">
+                  {fotos.map((u, i) => (
+                    <li key={u} className="flex items-center gap-3 border-b border-steel/20 pb-2">
+                      <img src={u} alt="" className="h-12 w-16 shrink-0 object-cover" />
+                      <span className="min-w-0 flex-1 truncate font-mono text-[10px] text-steel">{u}</span>
+                      {i === 0 ? (
+                        <span className="shrink-0 font-mono text-[9px] uppercase tracking-label text-port-ink">Principal</span>
+                      ) : (
+                        <button type="button" onClick={() => setFotos((p) => [u, ...p.filter((x) => x !== u)])}
+                          className="shrink-0 font-mono text-[9px] uppercase tracking-label text-steel underline">
+                          Principal
+                        </button>
+                      )}
+                      <button type="button" onClick={() => setFotos((p) => p.filter((x) => x !== u))}
+                        className="shrink-0 font-mono text-[10px] text-danger">×</button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+
+              {avisoFoto ? (
+                <p className="mt-3 border-l-2 border-danger pl-3 font-mono text-[11px] leading-[1.6] text-danger">
+                  {avisoFoto}
+                </p>
+              ) : null}
+            </div>
 
             <label className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-label text-graphite">
               <input type="checkbox" checked={reservada} onChange={(e) => setReservada(e.target.checked)} />

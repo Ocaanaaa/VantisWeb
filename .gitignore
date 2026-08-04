@@ -8,3 +8,7 @@ dist
 .env
 .env.*
 !.env.example
+
+# Fotos subidas desde el panel al trabajar en local (MEDIA_DIR).
+# En Vercel van a Blob, no al repositorio.
+public/media/subidas/
