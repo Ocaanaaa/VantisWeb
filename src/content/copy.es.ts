@@ -103,6 +103,7 @@ export const copy = {
         firstReg: "Primera matriculación",
         owners: "Propietarios",
         inspection: "Inspección",
+        co2: "Emisiones CO₂",
       },
     },
 

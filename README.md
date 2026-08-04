@@ -93,6 +93,25 @@ vez de a Blob. Esa carpeta está en `.gitignore`.
 > `noindex` pero accesible para quien adivine la URL. Antes de manejar
 > operaciones reales hay que poner autenticación de verdad.
 
+### La traducción
+
+Los anuncios llegan en alemán o en inglés, así que la ficha y el equipamiento
+se traducen solos al pegar el texto: `Sitzheizung vorn` → «Calefacción de
+asientos delanteros», `Leder, Schwarz` → «Cuero, Negro», `Kombi` → «Familiar».
+
+Es un **glosario** (`src/lib/traducir.ts`), no un traductor automático. El
+vocabulario de un anuncio de coche es cerrado —mobile.de y AutoScout24 usan
+listas de casillas fijas—, así que un glosario lo cubre casi entero, no cuesta
+nada por uso y siempre da la misma traducción. Un modelo de lenguaje traduciría
+«Standheizung» de cinco formas distintas y algún día suavizaría un
+«Unfallfahrzeug».
+
+Lo que el glosario no conoce **se queda en su idioma y el panel lo lista** para
+que lo corrijas antes de publicar. Suelen ser nombres de paquetes de fábrica
+(«M Drive Professional»), que tampoco tienen traducción. Para ampliarlo, añade
+entradas a `GLOSARIO` o `VALORES` en `src/lib/traducir.ts`; la clave va en
+minúsculas, sin diéresis y sin puntuación.
+
 ### Lo que la herramienta no hace
 
 No entra en mobile.de ni en AutoScout24: el texto del anuncio lo pegas tú.

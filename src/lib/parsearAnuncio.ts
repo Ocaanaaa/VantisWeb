@@ -8,7 +8,14 @@
  * El análisis es determinista, a base de etiquetas conocidas, sin modelo de
  * lenguaje: no cuesta nada por uso, no inventa datos y falla de forma
  * predecible. Lo que no reconoce lo deja vacío para que se rellene a mano.
+ *
+ * Los anuncios llegan en alemán o en inglés, nunca en español, así que la
+ * ficha se traduce aquí mismo con el glosario de `traducir.ts`. Lo que el
+ * glosario no conoce se devuelve en su idioma y se avisa: nada de dejar medio
+ * alemán colado en la web sin decirlo.
  */
+
+import { traducirFicha, traducirLista, detectarIdioma } from "./traducir";
 
 export interface FichaExtraida {
   modelo: string;
@@ -20,6 +27,10 @@ export interface FichaExtraida {
   equipamiento: string[];
   alertas: string[];
   camposVacios: string[];
+  /** Idioma detectado del anuncio. Solo para avisar en el panel. */
+  idioma: string;
+  /** Términos que el glosario no conoce y siguen en su idioma original. */
+  sinTraducir: string[];
 }
 
 /** Frases que descartan una unidad o exigen mirarla de cerca. */
@@ -39,13 +50,17 @@ const BANDERAS: Array<[RegExp, string]> = [
 const CAMPOS: Array<[string, RegExp]> = [
   ["firstReg", /(?:erstzulassung|first registration|primera matriculaci[oó]n)\s*[:\n]?\s*([0-9]{1,2}[./][0-9]{4}|[0-9]{4})/i],
   ["power", /(?:leistung|power|potencia)\s*[:\n]?\s*([0-9.]+\s*(?:kw|cv|ps|hp)[^\n,;]*)/i],
-  ["fuel", /(?:kraftstoff(?:art)?|fuel|combustible)\s*[:\n]?\s*([^\n,;]{3,30})/i],
-  ["transmission", /(?:getriebe(?:art)?|gearbox|transmission|cambio)\s*[:\n]?\s*([^\n,;]{3,30})/i],
+  // Ojo con las etiquetas de dos palabras: sin el «type» opcional, «Fuel type:
+  // Petrol» casa con «fuel» y captura «type: Petrol» como si fuera el valor.
+  ["fuel", /(?:kraftstoff(?:art)?|fuel(?:\s*type)?|combustible)\s*[:\n]?\s*([^\n,;]{3,30})/i],
+  ["transmission", /(?:getriebe(?:art)?|gearbox|transmission(?:\s*type)?|cambio)\s*[:\n]?\s*([^\n,;]{3,30})/i],
   ["engine", /(?:hubraum|displacement|cilindrada)\s*[:\n]?\s*([0-9.,]+\s*(?:cm³|ccm|cc|l)[^\n,;]*)/i],
   ["doors", /(?:t[üu]ren|doors|puertas)\s*[:\n]?\s*([0-9]{1}(?:\/[0-9])?)/i],
   ["seats", /(?:sitzpl[äa]tze|seats|plazas)\s*[:\n]?\s*([0-9]{1,2})/i],
-  ["color", /(?:au[ßs]enfarbe|farbe|colour|color exterior)\s*[:\n]?\s*([^\n,;]{3,40})/i],
-  ["upholstery", /(?:innenausstattung|polsterung|upholstery|tapicer[ií]a)\s*[:\n]?\s*([^\n,;]{3,40})/i],
+  // Color y tapicería sí admiten comas: «Leder, Schwarz» es un solo valor y
+  // cortarlo ahí perdería de qué color es el cuero.
+  ["color", /(?:au[ßs]enfarbe|farbe|colour|color exterior)\s*[:\n]?\s*([^\n;]{3,40})/i],
+  ["upholstery", /(?:innenausstattung|polsterung|upholstery|tapicer[ií]a)\s*[:\n]?\s*([^\n;]{3,40})/i],
   ["owners", /(?:fahrzeughalter|previous owners|propietarios)\s*[:\n]?\s*([0-9]{1,2})/i],
   ["body", /(?:kategorie|fahrzeugtyp|body type|carrocer[ií]a)\s*[:\n]?\s*([^\n,;]{3,30})/i],
   ["co2", /(?:co2[- ]?emission(?:en)?|emisiones)\s*[:\n]?\s*([0-9]{2,3})\s*g/i],
@@ -61,7 +76,25 @@ const MERCADOS: Array<[RegExp, string]> = [
 ];
 
 function limpiar(s: string): string {
-  return s.replace(/\s+/g, " ").trim();
+  return s.replace(/\s+/g, " ").replace(/^[:\-–—\s]+/, "").trim();
+}
+
+/**
+ * Cabeceras de sección del anuncio.
+ *
+ * Son líneas cortas y sin dos puntos, así que pasan el filtro de equipamiento
+ * y acaban colándose en la ficha como si fueran un extra del coche.
+ */
+const CABECERAS = new Set([
+  "ausstattung", "sonderausstattung", "serienausstattung", "extras",
+  "fahrzeugbeschreibung", "beschreibung", "technische daten", "fahrzeugdaten",
+  "equipment", "features", "description", "highlights", "details",
+  "specification", "specifications", "options", "standard equipment",
+  "equipamiento", "descripción", "ficha técnica", "características",
+]);
+
+function esCabecera(linea: string): boolean {
+  return CABECERAS.has(linea.toLowerCase().replace(/[:.]+$/, "").trim());
 }
 
 /**
@@ -126,16 +159,20 @@ export function parsearAnuncio(texto: string, url = ""): FichaExtraida {
   );
 
   // Equipamiento: líneas cortas de una lista, sin dos puntos.
-  const equipamiento = t
+  const equipamientoBruto = t
     .split("\n")
     .map((l) => l.replace(/^[•·\-*\s]+/, "").trim())
     .filter(
       (l) =>
         l.length > 3 && l.length < 60 && !l.includes(":") && !/\d{3,}/.test(l) &&
         // La primera linea ya se ha usado como modelo: no se repite aqui.
-        l !== modelo,
+        l !== modelo && !esCabecera(l),
     )
     .slice(0, 12);
+
+  // Al español. El modelo no se traduce: «Touring» es parte del nombre.
+  const equipoEs = traducirLista(equipamientoBruto);
+  const fichaEs = traducirFicha(spec);
 
   const alertas = BANDERAS.filter(([re]) => re.test(t)).map(([, aviso]) => aviso);
 
@@ -144,7 +181,14 @@ export function parsearAnuncio(texto: string, url = ""): FichaExtraida {
     ["precio", precioTexto], ["mercado", mercado],
   ].filter(([, v]) => !v).map(([k]) => k as string);
 
-  return { modelo, anio, km: kmTexto, precio: precioTexto, mercado, spec, equipamiento, alertas, camposVacios };
+  return {
+    modelo, anio, km: kmTexto, precio: precioTexto, mercado,
+    spec: fichaEs.spec,
+    equipamiento: equipoEs.lineas,
+    alertas, camposVacios,
+    idioma: detectarIdioma(texto),
+    sinTraducir: [...new Set([...fichaEs.sinTraducir, ...equipoEs.sinTraducir])],
+  };
 }
 
 /** "BMW M3 Competition Touring" + "D-112" → "bmw-m3-competition-touring-d112" */
@@ -152,7 +196,7 @@ export function generarSlug(modelo: string, id: string): string {
   const base = `${modelo} ${id.replace(/[^a-zA-Z0-9]/g, "")}`
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return base || "unidad";

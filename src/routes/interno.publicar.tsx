@@ -2,7 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { parsearAnuncio, generarSlug, type FichaExtraida } from "../lib/parsearAnuncio";
 import { comprimirImagen, type FotoLista } from "../lib/comprimirImagen";
+import { copy } from "../content";
 import type { Unidad } from "../lib/unidades";
+
+/** Las mismas etiquetas que ve el visitante en la ficha, no las claves internas. */
+const ETIQUETAS = copy.available.detail.specLabels as Record<string, string>;
 
 /**
  * Panel para publicar una unidad.
@@ -193,6 +197,23 @@ function Publicar() {
                     Todos los campos principales reconocidos.
                   </p>
                 )}
+
+                <p className="border-l-2 border-steel/40 pl-4 font-mono text-[11px] leading-[1.6] text-steel">
+                  Anuncio en {analisis.idioma}. La ficha y el equipamiento ya están traducidos.
+                </p>
+
+                {analisis.sinTraducir.length ? (
+                  <div className="border-l-2 border-port pl-4">
+                    <p className="font-mono text-[11px] leading-[1.6] text-graphite">
+                      Sin traducir, se han dejado tal cual —revísalos antes de publicar:
+                    </p>
+                    <ul className="mt-1.5 flex flex-col gap-1">
+                      {analisis.sinTraducir.map((s) => (
+                        <li key={s} className="font-mono text-[11px] text-steel">· {s}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </section>
@@ -309,7 +330,7 @@ function Publicar() {
                 <dl className="grid grid-cols-2 gap-x-6">
                   {Object.entries(spec).map(([k, v]) => (
                     <div key={k} className="flex justify-between gap-3 border-b border-steel/20 py-1.5">
-                      <dt className="font-mono text-[10px] text-steel">{k}</dt>
+                      <dt className="font-mono text-[10px] text-steel">{ETIQUETAS[k] ?? k}</dt>
                       <dd className="font-mono text-[11px] text-graphite">{v}</dd>
                     </div>
                   ))}
