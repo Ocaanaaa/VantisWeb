@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { copy } from "../content";
 import { Mark } from "./Logo";
+import type { Unidad } from "../lib/unidades";
 
 /**
  * Unidades localizadas que siguen a la venta, en formato anuncio: foto,
@@ -12,7 +13,7 @@ import { Mark } from "./Logo";
  * Para publicar una: deja el archivo en public/media y pon su ruta en `image`
  * dentro de content/copy.es.ts.
  */
-export default function Available() {
+export default function Available({ unidades }: { unidades: Unidad[] }) {
   const { available } = copy;
   return (
     <section id="disponibles" className="bg-bone py-20 md:py-28">
@@ -22,7 +23,7 @@ export default function Available() {
         <p className="mt-6 max-w-[62ch] text-[15px] leading-[1.5] text-steel">{available.body}</p>
 
         <ul className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {available.items.map((u) => (
+          {unidades.map((u) => (
             <li key={u.id} className="group flex flex-col border border-steel/25 bg-bone transition-colors duration-300 hover:border-graphite">
               <Link
                 to="/unidades/$slug"

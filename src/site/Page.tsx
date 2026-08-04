@@ -1,3 +1,4 @@
+import type { Unidad } from "../lib/unidades";
 import { useSmoothScroll } from "../lib/smoothScroll";
 import Cursor from "./Cursor";
 import Nav from "./Nav";
@@ -13,7 +14,7 @@ import Costs from "./Costs";
 import OrderForm from "./OrderForm";
 import Footer from "./Footer";
 
-export default function Page() {
+export default function Page({ unidades }: { unidades: Unidad[] }) {
   useSmoothScroll();
   return (
     <>
@@ -24,7 +25,7 @@ export default function Page() {
         <Figures />
         <HowItWorks />
         <Showreel />
-        <Available />
+        <Available unidades={unidades} />
         <Deliveries />
         <Markets />
         <Costs />

@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { copy } from '../content'
 
 export const Route = createFileRoute('/sitemap.xml')({
   server: {
     handlers: {
       GET: async ({ request }) => {
+        const { listarPublicadas } = await import('../lib/unidades.server')
+        const unidades = await listarPublicadas()
         const origin = new URL(request.url).origin
         const today = new Date().toISOString().split('T')[0]
         const xml = [
@@ -17,7 +18,7 @@ export const Route = createFileRoute('/sitemap.xml')({
           '    <priority>1.0</priority>',
           '  </url>',
           // Cada unidad tiene su propia ficha indexable.
-          ...copy.available.items.flatMap((unit) => [
+          ...unidades.flatMap((unit) => [
             '  <url>',
             `    <loc>${origin}/unidades/${unit.slug}</loc>`,
             `    <lastmod>${today}</lastmod>`,

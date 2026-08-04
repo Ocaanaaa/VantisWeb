@@ -1,5 +1,6 @@
 import { createFileRoute, notFound, Link } from "@tanstack/react-router";
 import { useState } from "react";
+import { createServerFn } from "@tanstack/react-start";
 import { copy } from "../content";
 import { Mark } from "../site/Logo";
 import Nav from "../site/Nav";
@@ -17,9 +18,16 @@ import { whatsappHref } from "../lib/submitOrder";
  * unico punto que hay que cambiar: el resto del componente no sabe de donde
  * vienen.
  */
+const cargarUnidad = createServerFn({ method: "GET" })
+  .inputValidator((slug: string) => slug)
+  .handler(async ({ data }) => {
+    const { obtenerPorSlug } = await import("../lib/unidades.server");
+    return obtenerPorSlug(data);
+  });
+
 export const Route = createFileRoute("/unidades/$slug")({
-  loader: ({ params }) => {
-    const unit = copy.available.items.find((u) => u.slug === params.slug);
+  loader: async ({ params }) => {
+    const unit = await cargarUnidad({ data: params.slug });
     if (!unit) throw notFound();
     return unit;
   },

@@ -12,7 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as InternoTasadorRouteImport } from './routes/interno.tasador'
+import { Route as ApiUnidadesRouteImport } from './routes/api.unidades'
+import { Route as InternoPublicarRouteImport } from './routes/interno.publicar'
 import { Route as UnidadesSlugRouteImport } from './routes/unidades.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -30,9 +31,14 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InternoTasadorRoute = InternoTasadorRouteImport.update({
-  id: '/interno/tasador',
-  path: '/interno/tasador',
+const ApiUnidadesRoute = ApiUnidadesRouteImport.update({
+  id: '/api/unidades',
+  path: '/api/unidades',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InternoPublicarRoute = InternoPublicarRouteImport.update({
+  id: '/interno/publicar',
+  path: '/interno/publicar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UnidadesSlugRoute = UnidadesSlugRouteImport.update({
@@ -45,14 +51,16 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/interno/tasador': typeof InternoTasadorRoute
+  '/api/unidades': typeof ApiUnidadesRoute
+  '/interno/publicar': typeof InternoPublicarRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/interno/tasador': typeof InternoTasadorRoute
+  '/api/unidades': typeof ApiUnidadesRoute
+  '/interno/publicar': typeof InternoPublicarRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
 }
 export interface FileRoutesById {
@@ -60,7 +68,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/interno/tasador': typeof InternoTasadorRoute
+  '/api/unidades': typeof ApiUnidadesRoute
+  '/interno/publicar': typeof InternoPublicarRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
 }
 export interface FileRouteTypes {
@@ -69,21 +78,24 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/interno/tasador'
+    | '/api/unidades'
+    | '/interno/publicar'
     | '/unidades/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/interno/tasador'
+    | '/api/unidades'
+    | '/interno/publicar'
     | '/unidades/$slug'
   id:
     | '__root__'
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
-    | '/interno/tasador'
+    | '/api/unidades'
+    | '/interno/publicar'
     | '/unidades/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -91,7 +103,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  InternoTasadorRoute: typeof InternoTasadorRoute
+  ApiUnidadesRoute: typeof ApiUnidadesRoute
+  InternoPublicarRoute: typeof InternoPublicarRoute
   UnidadesSlugRoute: typeof UnidadesSlugRoute
 }
 
@@ -118,11 +131,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/interno/tasador': {
-      id: '/interno/tasador'
-      path: '/interno/tasador'
-      fullPath: '/interno/tasador'
-      preLoaderRoute: typeof InternoTasadorRouteImport
+    '/api/unidades': {
+      id: '/api/unidades'
+      path: '/api/unidades'
+      fullPath: '/api/unidades'
+      preLoaderRoute: typeof ApiUnidadesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/interno/publicar': {
+      id: '/interno/publicar'
+      path: '/interno/publicar'
+      fullPath: '/interno/publicar'
+      preLoaderRoute: typeof InternoPublicarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/unidades/$slug': {
@@ -139,7 +159,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  InternoTasadorRoute: InternoTasadorRoute,
+  ApiUnidadesRoute: ApiUnidadesRoute,
+  InternoPublicarRoute: InternoPublicarRoute,
   UnidadesSlugRoute: UnidadesSlugRoute,
 }
 export const routeTree = rootRouteImport

@@ -51,12 +51,44 @@ Dos cosas que rompieron intentos anteriores y conviene no repetir:
 
 Después de importar, cada push a `main` redespliega solo.
 
+## Publicar unidades
+
+Las unidades se sirven desde Postgres si hay `POSTGRES_URL`; si no, desde
+`src/content/copy.es.ts` en solo lectura. Ese respaldo permite que la web
+funcione antes de montar nada.
+
+**Para activar la publicación desde el panel:**
+
+1. En Vercel: **Storage → Create Database → Postgres**. Al vincularla al
+   proyecto, Vercel inyecta `POSTGRES_URL` solo.
+2. En **Settings → Environment Variables**, añade `ADMIN_TOKEN` con una
+   contraseña larga que te inventes.
+3. Redespliega.
+
+La tabla se crea sola en la primera consulta.
+
+Después, en `/interno/publicar`: pegas el enlace y el texto del anuncio,
+se rellena la ficha, la revisas y publicas. Las unidades guardadas como
+borrador no salen en la web.
+
+> **Estas rutas internas no tienen usuarios ni sesiones.** `ADMIN_TOKEN` es un
+> secreto compartido que impide escrituras de fuera, y `/interno/*` es
+> `noindex` pero accesible para quien adivine la URL. Antes de manejar
+> operaciones reales hay que poner autenticación de verdad.
+
+### Lo que la herramienta no hace
+
+No entra en mobile.de ni en AutoScout24: el texto del anuncio lo pegas tú.
+Y **no copia las fotos del anuncio** — son del vendedor. Las fichas sin foto
+propia muestran un marcador.
+
 ## Estructura
 
 ```
 src/site/        Las secciones de la página, una por archivo
+src/routes/      Home, ficha de unidad, panel interno, API, robots y sitemap
 src/content/     TODO el texto (copy.es.ts) y el manifiesto de assets
-src/routes/      Raíz del documento, home, robots.txt y sitemap.xml
+src/lib/         Capa de datos, analizador de anuncios y utilidades
 src/styles.css   Paleta y tipografía (tokens de Tailwind v4)
 public/media/    Imágenes en WebP y el vídeo
 ```
