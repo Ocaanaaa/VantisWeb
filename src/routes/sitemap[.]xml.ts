@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { copy } from '../content'
 
 export const Route = createFileRoute('/sitemap.xml')({
   server: {
@@ -15,6 +16,15 @@ export const Route = createFileRoute('/sitemap.xml')({
           '    <changefreq>weekly</changefreq>',
           '    <priority>1.0</priority>',
           '  </url>',
+          // Cada unidad tiene su propia ficha indexable.
+          ...copy.available.items.flatMap((unit) => [
+            '  <url>',
+            `    <loc>${origin}/unidades/${unit.slug}</loc>`,
+            `    <lastmod>${today}</lastmod>`,
+            '    <changefreq>daily</changefreq>',
+            '    <priority>0.8</priority>',
+            '  </url>',
+          ]),
           '</urlset>',
         ].join('\n')
         return new Response(xml, {

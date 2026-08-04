@@ -12,8 +12,20 @@ import Logo from "./Logo";
 /** Recorrido en px sobre el que la barra pasa de transparente a opaca. Corto a
  *  proposito: el cambio acompana al primer gesto de scroll, no a media portada. */
 const RAMP = 140;
-export default function Nav() {
+/**
+ * `esPortada` distingue la home del resto de paginas, y decide dos cosas que
+ * van siempre juntas:
+ *
+ * 1. El color de arranque. En la home la barra nace transparente sobre el video
+ *    y se opaca con el scroll. En una pagina de fondo claro ese arranque
+ *    dejaria el logotipo en hueso sobre papel, o sea invisible, asi que alli
+ *    empieza ya opaca y no escucha el scroll.
+ * 2. Los enlaces. Las secciones son anclas de la home: desde una subpagina hay
+ *    que anteponer la barra o no llevan a ninguna parte.
+ */
+export default function Nav({ esPortada = true }: { esPortada?: boolean }) {
   const { nav } = copy;
+  const base = esPortada ? "" : "/";
   const header = useRef<HTMLElement>(null);
   const [open, setOpen] = useState(false);
   // El relleno del boton se invierte (claro sobre oscuro -> oscuro sobre claro).
@@ -22,6 +34,11 @@ export default function Nav() {
   const [solid, setSolid] = useState(false);
 
   useEffect(() => {
+    if (!esPortada) {
+      header.current?.style.setProperty("--nav-p", "1");
+      setSolid(true);
+      return;
+    }
     let frame = 0;
     const update = () => {
       frame = 0;
@@ -38,7 +55,7 @@ export default function Nav() {
       window.removeEventListener("scroll", onScroll);
       if (frame) cancelAnimationFrame(frame);
     };
-  }, []);
+  }, [esPortada]);
 
   // Con el panel abierto, el fondo no debe poder desplazarse.
   useEffect(() => {
@@ -61,26 +78,30 @@ export default function Nav() {
   const ctaCls = `${ctaBase} transition-colors ${onDark ? "bg-bone text-graphite" : "bg-graphite text-bone"}`;
 
   return (
-    <header ref={header} className="nav-shell fixed inset-x-0 top-0 z-50">
-      <a href="#proceso" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-graphite focus:px-4 focus:py-2 focus:font-mono focus:text-[11px] focus:text-bone">
+    <header
+      ref={header}
+      className="nav-shell fixed inset-x-0 top-0 z-50"
+      style={esPortada ? undefined : { ["--nav-p" as string]: 1 }}
+    >
+      <a href={`${base}#proceso`} className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:bg-graphite focus:px-4 focus:py-2 focus:font-mono focus:text-[11px] focus:text-bone">
         Saltar al contenido
       </a>
 
       <nav aria-label="Principal" className="mx-auto flex w-full max-w-[1440px] items-center justify-between px-5 py-4 md:px-10 md:py-5">
-        <a href="#inicio" className="nav-ink flex items-baseline">
+        <a href={`${base}#inicio`} className="nav-ink flex items-baseline">
           <Logo className="text-[15px] md:text-[17px]" />
         </a>
 
         <ul className="hidden items-center gap-7 md:flex">
           {nav.links.map((l) => (
             <li key={l.id}>
-              <a href={`#${l.id}`} className={linkCls}>{l.label}</a>
+              <a href={`${base}#${l.id}`} className={linkCls}>{l.label}</a>
             </li>
           ))}
         </ul>
 
         <div className="flex items-center gap-3">
-          <a href="#encargo" className={ctaCls}>
+          <a href={`${base}#encargo`} className={ctaCls}>
             <span className="md:hidden">{nav.ctaShort}</span>
             <span className="hidden md:inline">{nav.cta}</span>
             {/* La rayita solo desde md: en movil roba ancho sin aportar. */}
@@ -129,7 +150,7 @@ export default function Nav() {
               {nav.links.map((l, i) => (
                 <li key={l.id} className="border-b border-bone/15">
                   <a
-                    href={`#${l.id}`}
+                    href={`${base}#${l.id}`}
                     onClick={() => setOpen(false)}
                     className="flex items-baseline gap-4 py-5 transition-colors hover:text-port"
                   >
@@ -143,7 +164,7 @@ export default function Nav() {
 
           <div className="border-t border-bone/15 px-5 py-6">
             <a
-              href="#encargo"
+              href={`${base}#encargo`}
               onClick={() => setOpen(false)}
               className="group flex w-full items-center justify-between gap-3 bg-bone px-6 py-4 font-mono text-[11px] uppercase tracking-label text-graphite"
             >
