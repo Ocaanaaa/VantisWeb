@@ -15,6 +15,7 @@
   --color-graphite: #141628;  /* tinta azul noche */
   --color-steel: #6a6f84;     /* gris azulado, 4.6:1 sobre papel */
   --color-port: #b8942e;      /* ORO VANTIS: acento sobre fondo oscuro */
+  --color-danger: #a83232;    /* solo para avisos internos, no para la web publica */
   --color-port-ink: #8e7122;  /* oro oscuro: acento sobre fondo claro (4.6:1) */
   --color-port-soft: #dbbe8c; /* oro claro: rombo del isotipo */
 
