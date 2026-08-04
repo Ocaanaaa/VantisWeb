@@ -42,12 +42,26 @@ porque la página se renderiza en cada petición. Si Vercel trata el proyecto co
 un sitio estático, sirve `dist/client`, no encuentra `index.html` y devuelve
 **404 en la raíz**. Es lo que pasaba antes de añadir ese paso.
 
-Dos cosas que rompieron intentos anteriores y conviene no repetir:
+### El `vercel.json`
 
-- **No añadas un `vercel.json`** con `framework: null`: desactiva la detección
-  y deja el SSR sin ruta.
-- **Root Directory apuntando a una subcarpeta** que no existe: el build muere
-  en un segundo con `The specified Root Directory does not exist`.
+Lleva una sola línea: `installCommand: npm install --include=dev`.
+
+Está ahí porque si alguien define una variable de entorno `NODE_ENV` con valor
+`production`, npm se salta las devDependencies al instalar — y Vite, el plugin
+de React y TypeScript están ahí. La instalación termina bien y el build muere
+en el primer segundo con `Cannot find package '@vitejs/plugin-react'`. Con
+`--include=dev` da igual lo que valga `NODE_ENV`.
+
+**No pongas `framework: null` en ese archivo**: desactiva la detección y deja
+el SSR sin ruta. Fue lo que rompió un intento anterior. Con solo
+`installCommand`, la detección sigue funcionando.
+
+Y **no apuntes el Root Directory a una subcarpeta** que no existe: el build
+muere en un segundo con `The specified Root Directory does not exist`.
+
+> Si el despliegue falla, lo primero que hay que mirar es
+> **Settings → Environment Variables**: un `NODE_ENV` puesto a mano no debe
+> estar ahí. Lo segundo, **Redeploy desmarcando «Use existing Build Cache»**.
 
 Después de importar, cada push a `main` redespliega solo.
 
