@@ -130,6 +130,17 @@ async function subirABlob(nombre: string, datos: ArrayBuffer, tipo: string): Pro
       );
     }
 
+    // El almacén al que apunta el token ya no está. Casi siempre es que se
+    // ha creado uno nuevo y no se ha redesplegado: la función sigue con la
+    // variable del despliegue anterior.
+    if (/store_not_found/i.test(detalle)) {
+      throw new Error(
+        "El token apunta a un almacén de Blob que ya no existe. Si acabas de " +
+          "crear uno nuevo, redespliega: las variables de entorno solo entran " +
+          "en despliegues nuevos, así que la función sigue usando la anterior.",
+      );
+    }
+
     throw new Error(
       `Vercel Blob ha respondido ${res.status}. ${
         res.status === 403
