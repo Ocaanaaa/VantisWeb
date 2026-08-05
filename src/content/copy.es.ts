@@ -104,6 +104,9 @@ export const copy = {
         owners: "Propietarios",
         inspection: "Inspección",
         co2: "Emisiones CO₂",
+        condition: "Estado",
+        emission: "Clase de emisión",
+        climate: "Climatización",
       },
     },
 

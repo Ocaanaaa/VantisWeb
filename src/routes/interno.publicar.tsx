@@ -200,7 +200,10 @@ function Publicar() {
                 )}
 
                 <p className="border-l-2 border-steel/40 pl-4 font-mono text-[11px] leading-[1.6] text-steel">
-                  Anuncio en {analisis.idioma}. La ficha y el equipamiento ya están traducidos.
+                  Anuncio en {analisis.idioma}.{" "}
+                  {analisis.idioma === "español"
+                    ? "No hace falta traducir nada."
+                    : "La ficha y el equipamiento ya están traducidos."}
                 </p>
 
                 {analisis.sinTraducir.length ? (

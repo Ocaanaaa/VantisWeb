@@ -9,10 +9,19 @@
  * lenguaje: no cuesta nada por uso, no inventa datos y falla de forma
  * predecible. Lo que no reconoce lo deja vacío para que se rellene a mano.
  *
- * Los anuncios llegan en alemán o en inglés, nunca en español, así que la
- * ficha se traduce aquí mismo con el glosario de `traducir.ts`. Lo que el
- * glosario no conoce se devuelve en su idioma y se avisa: nada de dejar medio
- * alemán colado en la web sin decirlo.
+ * **Cómo llega el texto.** La primera versión asumía `Etiqueta: valor` en la
+ * misma línea, y con un anuncio real de mobile.de no acertaba casi nada:
+ * el portal pone la etiqueta y el valor en **líneas separadas**, repite la
+ * ficha dos veces, y al final pega la descripción del vendedor, que puede ser
+ * un muro de doscientas líneas en otro idioma. Ahora se lee así:
+ *
+ *   1. El texto se parte en secciones por sus cabeceras conocidas.
+ *   2. La ficha se saca solo de lo que va antes de la descripción del
+ *      vendedor, mirando cada línea que sea una etiqueta y cogiendo la
+ *      siguiente como valor (o lo que venga tras los dos puntos).
+ *   3. El equipamiento sale de la sección de características, no de
+ *      «cualquier línea corta», que es lo que antes se tragaba las etiquetas
+ *      de la propia ficha.
  */
 
 import { traducirFicha, traducirLista, detectarIdioma } from "./traducir";
@@ -33,68 +42,94 @@ export interface FichaExtraida {
   sinTraducir: string[];
 }
 
-/** Frases que descartan una unidad o exigen mirarla de cerca. */
+/**
+ * Frases que descartan una unidad o exigen mirarla de cerca.
+ *
+ * Ojo con buscar `accident` a secas: «Sin accidentes» lo contiene, y un
+ * anuncio que presume de no haber tenido ninguno acababa marcado como
+ * siniestrado. Pasó con el primer anuncio real que se probó. Por eso los
+ * patrones son de frases completas y además hay una lista de lo contrario.
+ */
 const BANDERAS: Array<[RegExp, string]> = [
-  [/unfall(fahrzeug|schaden)|accident/i, "El anuncio menciona daños por accidente"],
-  [/motorschaden|engine damage/i, "Menciona avería de motor"],
-  [/getriebeschaden/i, "Menciona avería de cambio"],
-  [/bastlerfahrzeug|ersatzteilträger/i, "Vehículo para piezas o restauración"],
-  [/export(fahrzeug)?\b/i, "Marcado como vehículo de exportación"],
-  [/ohne (tüv|hu)|keine hu/i, "Sin inspección técnica vigente"],
-  [/nachlackier|lackschaden/i, "Repintado o daños de pintura declarados"],
+  [/unfall(fahrzeug|schaden|wagen)|accident damage|vehículo accidentado|accidentado\b/i,
+    "El anuncio menciona daños por accidente"],
+  [/motorschaden|engine damage|avería de motor/i, "Menciona avería de motor"],
+  [/getriebeschaden|avería de cambio/i, "Menciona avería de cambio"],
+  [/bastlerfahrzeug|ersatzteilträger|para piezas/i, "Vehículo para piezas o restauración"],
+  [/exportfahrzeug|export vehicle/i, "Marcado como vehículo de exportación"],
+  [/ohne (tüv|hu)\b|keine hu\b|sin itv/i, "Sin inspección técnica vigente"],
+  [/nachlackier|lackschaden|repintado/i, "Repintado o daños de pintura declarados"],
   [/tachotausch|tacho getauscht/i, "Cuadro de instrumentos sustituido: kilometraje a verificar"],
   [/reimport/i, "Reimportación: comprobar la ficha técnica de origen"],
 ];
 
-/** Etiquetas de mobile.de y AutoScout24, y su equivalente en la ficha. */
-const CAMPOS: Array<[string, RegExp]> = [
-  ["firstReg", /(?:erstzulassung|first registration|primera matriculaci[oó]n)\s*[:\n]?\s*([0-9]{1,2}[./][0-9]{4}|[0-9]{4})/i],
-  ["power", /(?:leistung|power|potencia)\s*[:\n]?\s*([0-9.]+\s*(?:kw|cv|ps|hp)[^\n,;]*)/i],
-  // Ojo con las etiquetas de dos palabras: sin el «type» opcional, «Fuel type:
-  // Petrol» casa con «fuel» y captura «type: Petrol» como si fuera el valor.
-  ["fuel", /(?:kraftstoff(?:art)?|fuel(?:\s*type)?|combustible)\s*[:\n]?\s*([^\n,;]{3,30})/i],
-  ["transmission", /(?:getriebe(?:art)?|gearbox|transmission(?:\s*type)?|cambio)\s*[:\n]?\s*([^\n,;]{3,30})/i],
-  ["engine", /(?:hubraum|displacement|cilindrada)\s*[:\n]?\s*([0-9.,]+\s*(?:cm³|ccm|cc|l)[^\n,;]*)/i],
-  ["doors", /(?:t[üu]ren|doors|puertas)\s*[:\n]?\s*([0-9]{1}(?:\/[0-9])?)/i],
-  ["seats", /(?:sitzpl[äa]tze|seats|plazas)\s*[:\n]?\s*([0-9]{1,2})/i],
-  // Color y tapicería sí admiten comas: «Leder, Schwarz» es un solo valor y
-  // cortarlo ahí perdería de qué color es el cuero.
-  ["color", /(?:au[ßs]enfarbe|farbe|colour|color exterior)\s*[:\n]?\s*([^\n;]{3,40})/i],
-  ["upholstery", /(?:innenausstattung|polsterung|upholstery|tapicer[ií]a)\s*[:\n]?\s*([^\n;]{3,40})/i],
-  ["owners", /(?:fahrzeughalter|previous owners|propietarios)\s*[:\n]?\s*([0-9]{1,2})/i],
-  ["body", /(?:kategorie|fahrzeugtyp|body type|carrocer[ií]a)\s*[:\n]?\s*([^\n,;]{3,30})/i],
-  ["co2", /(?:co2[- ]?emission(?:en)?|emisiones)\s*[:\n]?\s*([0-9]{2,3})\s*g/i],
+/** Lo contrario: si el anuncio dice esto, la bandera de accidente no aplica. */
+const SIN_ACCIDENTES = /unfallfrei|sin accidentes|accident[- ]free|no accident/i;
+
+/**
+ * Etiquetas de la ficha, en los tres idiomas en que llegan los anuncios.
+ *
+ * El orden importa: se comprueban de más larga a más corta, para que
+ * «Número de puertas» no lo capture «puertas» y «Clase de emisión» no lo
+ * capture «emisión».
+ */
+const ETIQUETAS: Array<[string, string[]]> = [
+  ["firstReg", ["primer registro", "primera matriculación", "primera matriculacion",
+    "erstzulassung", "first registration"]],
+  ["km", ["kilometraje", "kilometerstand", "mileage"]],
+  ["power", ["potencia", "leistung", "power"]],
+  ["fuel", ["tipo de combustible", "combustible", "kraftstoffart", "kraftstoff", "fuel type", "fuel"]],
+  ["transmission", ["tipo de transmisión", "transmisión", "transmision", "cambio",
+    "getriebeart", "getriebe", "gearbox", "transmission"]],
+  ["engine", ["capacidad cúbica", "capacidad cubica", "cilindrada", "hubraum", "displacement"]],
+  ["doors", ["número de puertas", "numero de puertas", "puertas", "türen", "tueren", "doors"]],
+  ["seats", ["número de asientos", "numero de asientos", "plazas", "asientos",
+    "sitzplätze", "sitzplaetze", "seats"]],
+  ["color", ["color exterior", "außenfarbe", "aussenfarbe", "exterior colour", "colour", "farbe", "color"]],
+  ["upholstery", ["diseño interior", "diseno interior", "tapicería", "tapiceria",
+    "innenausstattung", "polsterung", "upholstery", "interior design"]],
+  ["owners", ["número de propietarios", "numero de propietarios", "propietarios",
+    "fahrzeughalter", "previous owners", "owners"]],
+  ["body", ["categoría", "categoria", "carrocería", "carroceria", "fahrzeugtyp",
+    "kategorie", "body type"]],
+  ["co2", ["emisiones de co2", "co2-emissionen", "co2 emissionen", "co2 emissions", "emisiones"]],
+  ["condition", ["estado del vehículo", "estado del vehiculo", "fahrzeugzustand", "vehicle condition"]],
+  ["emission", ["clase de emisión", "clase de emision", "schadstoffklasse", "emission class"]],
+  ["drive", ["tipo de tracción", "tipo de traccion", "antriebsart", "drive type"]],
+  ["climate", ["climatización", "climatizacion", "klimatisierung"]],
+  ["inspection", ["próxima itv", "proxima itv", "hu", "tüv", "inspección técnica"]],
 ];
 
+/** Cabeceras que marcan dónde empieza cada parte del anuncio. */
+const CABECERA_EQUIPO = /^(características|caracteristicas|equipamiento|extras|ausstattung|sonderausstattung|serienausstattung|features|equipment)$/i;
+const CABECERA_DESCRIPCION = /^(descripción del vehículo.*|descripcion del vehiculo.*|fahrzeugbeschreibung|vehicle description.*|descripción del vendedor.*)$/i;
+const CABECERA_FICHA = /^(datos técnicos|datos tecnicos|technische daten|technical data|ficha técnica|ficha tecnica)$/i;
+
+/** Marcas, para reconocer el título sin inventárselo. */
+const MARCAS = /^(abarth|alfa romeo|alpina|aston martin|audi|bentley|bmw|bugatti|cadillac|chevrolet|chrysler|citroën|citroen|cupra|dacia|dodge|ds|ferrari|fiat|ford|genesis|gmc|honda|hyundai|infiniti|jaguar|jeep|kia|lamborghini|lancia|land rover|lexus|lotus|maserati|mazda|mclaren|mercedes(-| )?benz|mercedes|mg|mini|mitsubishi|nissan|opel|peugeot|polestar|porsche|ram|renault|rolls(-| )?royce|seat|škoda|skoda|smart|subaru|suzuki|tesla|toyota|volkswagen|vw|volvo)\b/i;
+
 const MERCADOS: Array<[RegExp, string]> = [
-  [/\b(deutschland|germany|alemania|\bDE\b)\b/i, "Alemania"],
-  [/\b(nederland|netherlands|pa[ií]ses bajos|\bNL\b)\b/i, "Países Bajos"],
-  [/\b(belgi[eë]|belgium|b[ée]lgica|\bBE\b)\b/i, "Bélgica"],
-  [/\b(italia|italy|\bIT\b)\b/i, "Italia"],
-  [/\b(france|francia|\bFR\b)\b/i, "Francia"],
-  [/\b(austria|[öo]sterreich|\bAT\b)\b/i, "Austria"],
+  [/\b(deutschland|germany|alemania)\b/i, "Alemania"],
+  [/\b(nederland|netherlands|pa[ií]ses bajos)\b/i, "Países Bajos"],
+  [/\b(belgi[eë]|belgium|b[ée]lgica)\b/i, "Bélgica"],
+  [/\b(italia|italy)\b/i, "Italia"],
+  [/\b(france|francia)\b/i, "Francia"],
+  [/\b(austria|[öo]sterreich)\b/i, "Austria"],
 ];
 
 function limpiar(s: string): string {
-  return s.replace(/\s+/g, " ").replace(/^[:\-–—\s]+/, "").trim();
+  return s.replace(/\s+/g, " ").replace(/^[:\-–—•·*\s]+/, "").trim();
 }
 
-/**
- * Cabeceras de sección del anuncio.
- *
- * Son líneas cortas y sin dos puntos, así que pasan el filtro de equipamiento
- * y acaban colándose en la ficha como si fueran un extra del coche.
- */
-const CABECERAS = new Set([
-  "ausstattung", "sonderausstattung", "serienausstattung", "extras",
-  "fahrzeugbeschreibung", "beschreibung", "technische daten", "fahrzeugdaten",
-  "equipment", "features", "description", "highlights", "details",
-  "specification", "specifications", "options", "standard equipment",
-  "equipamiento", "descripción", "ficha técnica", "características",
-]);
-
-function esCabecera(linea: string): boolean {
-  return CABECERAS.has(linea.toLowerCase().replace(/[:.]+$/, "").trim());
+/** Para comparar etiquetas: sin mayúsculas, sin tildes, sin puntuación final. */
+function normalizar(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[:.]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -118,63 +153,120 @@ function normalizarPrecio(bruto: string): string {
   return agrupar(n) + " €";
 }
 
+/** Etiquetas normalizadas, de más larga a más corta. */
+const ETIQUETAS_ORDENADAS = ETIQUETAS.flatMap(([campo, alias]) =>
+  alias.map((a) => ({ campo, alias: normalizar(a) })),
+).sort((a, b) => b.alias.length - a.alias.length);
+
+/** Si la línea es exactamente una etiqueta, devuelve su campo. */
+function campoDeEtiqueta(linea: string): string | null {
+  const n = normalizar(linea);
+  return ETIQUETAS_ORDENADAS.find((e) => e.alias === n)?.campo ?? null;
+}
+
+/** Si la línea es «Etiqueta: valor», devuelve ambos. */
+function campoConValor(linea: string): { campo: string; valor: string } | null {
+  const corte = linea.indexOf(":");
+  if (corte < 1) return null;
+  const campo = campoDeEtiqueta(linea.slice(0, corte));
+  const valor = limpiar(linea.slice(corte + 1));
+  return campo && valor ? { campo, valor } : null;
+}
+
 export function parsearAnuncio(texto: string, url = ""): FichaExtraida {
   const t = texto.replace(/ /g, " ");
-  const spec: Record<string, string> = {};
+  const lineas = t.split("\n").map((l) => l.replace(/^[•·\-*\s]+/, "").trim());
 
-  for (const [clave, re] of CAMPOS) {
-    const m = t.match(re);
-    if (m) spec[clave] = limpiar(m[1]);
+  // --- Dónde empieza cada parte ---
+  const iEquipo = lineas.findIndex((l) => CABECERA_EQUIPO.test(normalizar(l)));
+  const iDescripcion = lineas.findIndex((l) => CABECERA_DESCRIPCION.test(normalizar(l)));
+
+  // La ficha se lee solo de la parte estructurada. La descripción libre del
+  // vendedor queda fuera a propósito: es donde estaba «Komfort,
+  // Innenausstattung», que se colaba como si fuera la tapicería.
+  const finFicha = Math.min(
+    ...[iEquipo, iDescripcion].filter((i) => i >= 0).concat(lineas.length),
+  );
+  const deFicha = lineas.slice(0, finFicha);
+
+  // --- Ficha técnica ---
+  const spec: Record<string, string> = {};
+  for (let i = 0; i < deFicha.length; i++) {
+    const linea = deFicha[i];
+    if (!linea) continue;
+
+    const inline = campoConValor(linea);
+    if (inline && !spec[inline.campo]) {
+      spec[inline.campo] = inline.valor;
+      continue;
+    }
+
+    // Etiqueta sola en su línea: el valor es la siguiente que tenga contenido
+    // y no sea a su vez otra etiqueta.
+    const campo = campoDeEtiqueta(linea);
+    if (!campo || spec[campo]) continue;
+    const siguiente = deFicha.slice(i + 1).find((l) => l.length > 0);
+    if (siguiente && !campoDeEtiqueta(siguiente) && !CABECERA_FICHA.test(normalizar(siguiente))) {
+      spec[campo] = limpiar(siguiente);
+    }
   }
 
-  // Kilometraje: la cifra seguida de km, con separadores de miles.
-  const km = t.match(/([0-9][0-9.\s]{2,12})\s*km\b/i);
-  const kmTexto = km
-    ? agrupar(Number(km[1].replace(/[^\d]/g, ""))) + " km"
-    : "";
+  // Kilometraje y potencia se normalizan; el resto va tal cual.
+  const kmBruto = spec.km ?? "";
+  delete spec.km;
+  const km = kmBruto.match(/([0-9][0-9.\s]{2,12})/);
+  const kmTexto = km ? agrupar(Number(km[1].replace(/[^\d]/g, ""))) + " km" : "";
 
-  // Precio: el primer importe con símbolo de euro y al menos cuatro cifras.
+  // --- Precio ---
   const precio = t.match(/(?:€|eur)\s*([0-9][0-9.,\s]{3,12})|([0-9][0-9.,\s]{3,12})\s*(?:€|eur)/i);
   const precioTexto = precio ? normalizarPrecio(precio[1] ?? precio[2]) : "";
 
-  // Año: el de primera matriculación si está, si no un año suelto plausible.
+  // --- Año, de la primera matriculación ---
   let anio = "";
-  if (spec.firstReg) {
-    const a = spec.firstReg.match(/([0-9]{4})/);
-    if (a) anio = a[1];
-  }
-  if (!anio) {
-    const a = t.match(/\b(19[6-9][0-9]|20[0-4][0-9])\b/);
-    if (a) anio = a[1];
-  }
+  const deFirstReg = (spec.firstReg ?? "").match(/([0-9]{4})/);
+  if (deFirstReg) anio = deFirstReg[1];
 
+  // --- Mercado ---
   let mercado = "";
   for (const [re, nombre] of MERCADOS) {
     if (re.test(t) || re.test(url)) { mercado = nombre; break; }
   }
+  // mobile.de y AutoScout24 alemán: si no se ha dicho otra cosa, es Alemania.
+  if (!mercado && /mobile\.de|autoscout24\.de/i.test(url)) mercado = "Alemania";
 
-  // El modelo suele ser la primera línea con contenido del anuncio pegado.
+  // --- Modelo ---
+  // Solo si una línea empieza por una marca conocida. Antes se cogía la
+  // primera línea con más de seis letras, y en un anuncio real eso daba
+  // «Kilometraje». Mejor vacío y que se escriba a mano que inventado.
   const modelo = limpiar(
-    (t.split("\n").find((l) => l.trim().length > 6 && !/^[\d\s.,€]+$/.test(l)) ?? "").slice(0, 90),
+    (lineas.find((l) => l.length > 3 && l.length < 90 && MARCAS.test(l)) ?? "").slice(0, 90),
   );
 
-  // Equipamiento: líneas cortas de una lista, sin dos puntos.
-  const equipamientoBruto = t
-    .split("\n")
-    .map((l) => l.replace(/^[•·\-*\s]+/, "").trim())
-    .filter(
-      (l) =>
-        l.length > 3 && l.length < 60 && !l.includes(":") && !/\d{3,}/.test(l) &&
-        // La primera linea ya se ha usado como modelo: no se repite aqui.
-        l !== modelo && !esCabecera(l),
-    )
-    .slice(0, 12);
+  // --- Equipamiento ---
+  // De la sección de características hasta la siguiente cabecera. Antes se
+  // cogía «cualquier línea corta sin dos puntos», y eso se tragaba las
+  // etiquetas de la propia ficha.
+  let equipamientoBruto: string[] = [];
+  if (iEquipo >= 0) {
+    const fin = iDescripcion > iEquipo ? iDescripcion : lineas.length;
+    equipamientoBruto = lineas
+      .slice(iEquipo + 1, fin)
+      .filter((l) => l.length > 2 && l.length < 70 && !CABECERA_FICHA.test(normalizar(l)))
+      .slice(0, 60);
+  }
 
-  // Al español. El modelo no se traduce: «Touring» es parte del nombre.
+  const idioma = detectarIdioma(texto);
+  // Si el anuncio ya viene en español no hay nada que traducir, así que
+  // tampoco hay nada que avisar: marcarlo sería ruido, no información.
+  const avisar = idioma !== "español";
   const equipoEs = traducirLista(equipamientoBruto);
   const fichaEs = traducirFicha(spec);
 
-  const alertas = BANDERAS.filter(([re]) => re.test(t)).map(([, aviso]) => aviso);
+  const alertas = BANDERAS.filter(([re, aviso]) => {
+    if (!re.test(t)) return false;
+    if (aviso.includes("accidente") && SIN_ACCIDENTES.test(t)) return false;
+    return true;
+  }).map(([, aviso]) => aviso);
 
   const camposVacios = [
     ["modelo", modelo], ["año", anio], ["kilometraje", kmTexto],
@@ -185,9 +277,10 @@ export function parsearAnuncio(texto: string, url = ""): FichaExtraida {
     modelo, anio, km: kmTexto, precio: precioTexto, mercado,
     spec: fichaEs.spec,
     equipamiento: equipoEs.lineas,
-    alertas, camposVacios,
-    idioma: detectarIdioma(texto),
-    sinTraducir: [...new Set([...fichaEs.sinTraducir, ...equipoEs.sinTraducir])],
+    alertas, camposVacios, idioma,
+    sinTraducir: avisar
+      ? [...new Set([...fichaEs.sinTraducir, ...equipoEs.sinTraducir])]
+      : [],
   };
 }
 
@@ -196,7 +289,7 @@ export function generarSlug(modelo: string, id: string): string {
   const base = `${modelo} ${id.replace(/[^a-zA-Z0-9]/g, "")}`
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[̀-ͯ]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return base || "unidad";
