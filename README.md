@@ -130,6 +130,33 @@ Después, en `/interno/publicar`: pegas el enlace y el texto del anuncio,
 se rellena la ficha, subes las fotos, la revisas y publicas. Las unidades
 guardadas como borrador no salen en la web.
 
+### El texto del anuncio
+
+En el panel, **Redactar anuncio** escribe la descripción con la ficha que hay
+en el formulario: titular, ficha técnica, equipamiento destacado, qué incluye
+el precio, financiación, quiénes somos y contacto. Sale en texto plano con las
+secciones en mayúsculas, que es lo único que respetan todos los portales, y el
+botón **Copiar** lo deja listo para pegar en coches.net o Wallapop.
+
+Es una plantilla, no un modelo de lenguaje. Un texto comercial generado diría
+«impecable» de un coche que no ha visto nadie, y en un anuncio de venta eso no
+es una floritura: es una afirmación sobre el estado de la unidad.
+
+La prosa fija está en `copy.es.ts` → `anuncio`, para cambiarla sin tocar
+código. Los huecos `{modelo}`, `{mercado}`, `{referencia}`… se rellenan con la
+ficha. **Escribe cada hueco en su propia frase**: si el dato falta, se cae esa
+frase entera en vez de dejar un «La traemos de , se inspecciona».
+
+Del equipamiento se eligen doce: primero lo que vende (techo, cuero, head-up,
+faros, asientos, navegación, sonido…) y fuera lo que lleva cualquier coche
+desde hace veinte años.
+
+> **La financiación no lleva cifras a propósito.** En cuanto un anuncio
+> menciona un tipo, una cuota o cualquier importe del coste del crédito, la
+> Ley 16/2011 obliga a incluir la TAE y un ejemplo representativo. Si quieres
+> anunciar condiciones concretas, pídeselas a la financiera y añádelas con su
+> TAE en `copy.es.ts`.
+
 ### Las fotos
 
 Se eligen desde el panel y **se convierten a WebP en el navegador** antes de

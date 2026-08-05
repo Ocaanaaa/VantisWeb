@@ -94,6 +94,7 @@ export const copy = {
         engine: "Motor",
         transmission: "Cambio",
         drive: "Tracción",
+        propulsion: "Tipo de propulsión",
         body: "Carrocería",
         doors: "Puertas",
         seats: "Plazas",
@@ -342,6 +343,47 @@ export const copy = {
     whatsapp: { label: "WhatsApp Business", action: "Abrir conversación", number: "+34 600 000 000", prefill: "Hola Vantis, quiero encargar un coche." },
     discretion: "Discreción por defecto. Los encargos no se publican sin permiso escrito del cliente.",
   },
+  /**
+   * Texto del anuncio que se genera en /interno/publicar.
+   *
+   * Se pega tal cual en coches.net, Wallapop o donde haga falta, así que va en
+   * texto plano. Los huecos {modelo}, {anio}, {km}, {mercado}, {precio} y
+   * {referencia} se rellenan con la ficha de cada unidad.
+   */
+  anuncio: {
+    fichaTitulo: "FICHA TÉCNICA",
+    equipamientoTitulo: "EQUIPAMIENTO DESTACADO",
+
+    intro:
+      // Cada hueco, en su propia frase: si el dato falta, se cae solo esa frase
+      // y no medio párrafo. Ver rellenar() en descripcionAnuncio.ts.
+      "Unidad localizada e importada a la carta por Vantis Motors. La traemos de {mercado}. Se inspecciona antes de comprarla y se entrega en España matriculada y lista para circular.",
+
+    incluyeTitulo: "QUÉ INCLUYE EL PRECIO",
+    incluye:
+      "Compra en origen, transporte, despacho de aduanas, impuestos de importación, homologación individual cuando el origen lo exige, ITV, impuesto de matriculación y placas. Recibes el desglose por escrito antes de firmar nada. Sin comisiones ocultas ni cargos de última hora.",
+
+    financiacionTitulo: "FINANCIACIÓN",
+    // Sin cifras a propósito. En cuanto un anuncio menciona un tipo, una cuota
+    // o cualquier importe del coste del crédito, la Ley 16/2011 obliga a
+    // incluir la TAE y un ejemplo representativo. Si quieres anunciar
+    // condiciones concretas, pídeselas a la financiera y añádelas aquí con su
+    // TAE; mientras tanto, esto invita a preguntar sin prometer nada.
+    financiacion:
+      "Trabajamos con financiación para vehículo de importación, con y sin entrada. Te preparamos un estudio a medida sin compromiso: escríbenos con la unidad que te interesa y lo vemos.",
+
+    nosotrosTitulo: "QUIÉNES SOMOS",
+    nosotros:
+      "Vantis Motors no es un concesionario y no tiene stock. Importamos por encargo: el cliente describe el coche que quiere y nosotros lo localizamos en la Unión Europea y Estados Unidos, lo inspeccionamos, lo compramos, lo importamos, lo homologamos y lo matriculamos. Las unidades que publicamos son coches que hemos encontrado y siguen a la venta en origen.",
+
+    contactoTitulo: "CONTACTO",
+    contacto:
+      "Referencia {referencia}. Escríbenos por WhatsApp al +34 600 000 000 o a encargos@vantismotors.com y te confirmamos disponibilidad y precio final puesto en España.",
+
+    aviso:
+      "Precio orientativo con impuestos y gestión incluidos, calculado a fecha de publicación. No constituye oferta en firme: cada operación se cierra con presupuesto por escrito tras verificar disponibilidad y estado.",
+  },
+
   footer: {
     brand: "VANTIS MOTORS",
     tagline: "Importación a la carta de vehículos de lujo.",

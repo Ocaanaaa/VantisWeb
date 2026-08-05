@@ -95,7 +95,11 @@ const ETIQUETAS: Array<[string, string[]]> = [
   ["co2", ["emisiones de co2", "co2-emissionen", "co2 emissionen", "co2 emissions", "emisiones"]],
   ["condition", ["estado del vehículo", "estado del vehiculo", "fahrzeugzustand", "vehicle condition"]],
   ["emission", ["clase de emisión", "clase de emision", "schadstoffklasse", "emission class"]],
-  ["drive", ["tipo de tracción", "tipo de traccion", "antriebsart", "drive type"]],
+  // Ojo: en mobile.de «Tipo de tracción» / «Antriebsart» no es delantera o
+  // trasera, es si el coche es de combustión, eléctrico o híbrido. Etiquetarlo
+  // como tracción en un anuncio de venta es decirle al cliente otra cosa.
+  ["propulsion", ["tipo de tracción", "tipo de traccion", "antriebsart", "drive type"]],
+  ["drive", ["tracción", "traccion", "antrieb", "drivetrain"]],
   ["climate", ["climatización", "climatizacion", "klimatisierung"]],
   ["inspection", ["próxima itv", "proxima itv", "hu", "tüv", "inspección técnica"]],
 ];
@@ -126,7 +130,7 @@ function normalizar(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[:.]+$/, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -289,7 +293,7 @@ export function generarSlug(modelo: string, id: string): string {
   const base = `${modelo} ${id.replace(/[^a-zA-Z0-9]/g, "")}`
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return base || "unidad";

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { parsearAnuncio, generarSlug, type FichaExtraida } from "../lib/parsearAnuncio";
 import { comprimirImagen, type FotoLista } from "../lib/comprimirImagen";
 import { leerRespuesta } from "../lib/leerRespuesta";
+import { generarDescripcion } from "../lib/descripcionAnuncio";
 import { copy } from "../content";
 import type { Unidad } from "../lib/unidades";
 
@@ -53,6 +54,7 @@ function Publicar() {
   const [pendientes, setPendientes] = useState<FotoLista[]>([]);
   const [subiendo, setSubiendo] = useState(false);
   const [avisoFoto, setAvisoFoto] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   const elegirFotos = async (lista: FileList | null) => {
     if (!lista?.length) return;
@@ -109,6 +111,42 @@ function Publicar() {
   };
 
   const slug = f.modelo && f.id ? generarSlug(f.modelo, f.id) : "";
+
+  /**
+   * Redacta el anuncio con lo que hay en el formulario ahora mismo.
+   *
+   * Se lee del formulario y no del análisis para que respete las correcciones
+   * a mano: si has arreglado el modelo o el precio, el texto sale con lo
+   * corregido.
+   */
+  const redactar = () => {
+    const texto = generarDescripcion(
+      {
+        id: f.id.trim(),
+        model: f.modelo.trim(),
+        year: f.anio.trim(),
+        km: f.km.trim(),
+        market: f.mercado.trim(),
+        price: f.precio.trim(),
+        spec,
+        equipment: f.equipamiento.split("\n").map((s) => s.trim()).filter(Boolean),
+      },
+      copy.anuncio,
+      ETIQUETAS,
+    );
+    setF((prev) => ({ ...prev, resumen: texto }));
+    setCopiado(false);
+  };
+
+  const copiar = async () => {
+    try {
+      await navigator.clipboard.writeText(f.resumen);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      setEstado({ tipo: "error", texto: "El navegador no ha dejado copiar. Selecciona el texto a mano." });
+    }
+  };
 
   const enviar = async (publicada: boolean) => {
     setEnviando(true);
@@ -235,11 +273,32 @@ function Publicar() {
             </div>
             <Campo etiqueta="Precio puesto en España" valor={f.precio} onChange={(v) => setF({ ...f, precio: v })} />
 
-            <label className="block">
-              <span className="label mb-2 block">Descripción</span>
-              <textarea value={f.resumen} onChange={(e) => setF({ ...f, resumen: e.target.value })} rows={4}
-                className="w-full resize-y border border-steel/30 bg-transparent px-4 py-3 text-[14px] leading-[1.5] text-graphite focus:border-graphite focus:outline-none" />
-            </label>
+            <div>
+              {/* El contador va fuera del <label>, así que el textarea lleva
+                  id y htmlFor propios: si no, se queda sin etiqueta asociada. */}
+              <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
+                <label htmlFor="resumen" className="label">Descripción del anuncio</label>
+                <span className="font-mono text-[10px] text-steel">
+                  {f.resumen.length} caracteres
+                </span>
+              </div>
+              <textarea id="resumen" value={f.resumen} onChange={(e) => setF({ ...f, resumen: e.target.value })} rows={12}
+                placeholder="Dale a «Redactar anuncio» y sale escrito con la ficha de arriba. Se puede editar."
+                className="w-full resize-y border border-steel/30 bg-transparent px-4 py-3 font-mono text-[12px] leading-[1.6] text-graphite placeholder:text-steel/50 focus:border-graphite focus:outline-none" />
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <button type="button" onClick={redactar} disabled={!f.modelo.trim()}
+                  className="bg-port px-5 py-2.5 font-mono text-[10px] uppercase tracking-label text-graphite disabled:opacity-40">
+                  Redactar anuncio
+                </button>
+                <button type="button" onClick={copiar} disabled={!f.resumen.trim()}
+                  className="border border-graphite px-5 py-2.5 font-mono text-[10px] uppercase tracking-label text-graphite disabled:opacity-40">
+                  {copiado ? "Copiado ✓" : "Copiar"}
+                </button>
+                <span className="font-mono text-[10px] leading-[1.6] text-steel">
+                  El mismo texto vale para la web y para coches.net o Wallapop.
+                </span>
+              </div>
+            </div>
 
             <label className="block">
               <span className="label mb-2 block">Equipamiento (uno por línea)</span>
