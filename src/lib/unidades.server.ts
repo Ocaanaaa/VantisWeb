@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { conexion, hayBaseDeDatos } from "./postgres.server";
 import { copy } from "../content";
 import type { Unidad } from "./unidades";
 
@@ -15,21 +15,7 @@ import type { Unidad } from "./unidades";
 
 export type { Unidad };
 
-const CADENA = process.env.POSTGRES_URL ?? process.env.DATABASE_URL ?? "";
-export const hayBaseDeDatos = Boolean(CADENA);
-
-let pool: Pool | null = null;
-function conexion(): Pool {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: CADENA,
-      // Los Postgres gestionados exigen TLS; en local no hay certificado.
-      ssl: CADENA.includes("localhost") || CADENA.includes("/") ? false : { rejectUnauthorized: false },
-      max: 3,
-    });
-  }
-  return pool;
-}
+export { hayBaseDeDatos };
 
 export async function prepararEsquema(): Promise<void> {
   if (!hayBaseDeDatos) return;

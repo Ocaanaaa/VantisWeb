@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { conexion, hayBaseDeDatos } from "./postgres.server";
 import type { Solicitud, SolicitudEntrante } from "./solicitudes";
 
 /**
@@ -16,20 +16,7 @@ import type { Solicitud, SolicitudEntrante } from "./solicitudes";
 
 export type { Solicitud, SolicitudEntrante };
 
-const CADENA = process.env.POSTGRES_URL ?? process.env.DATABASE_URL ?? "";
-export const hayBaseDeDatos = Boolean(CADENA);
-
-let pool: Pool | null = null;
-function conexion(): Pool {
-  if (!pool) {
-    pool = new Pool({
-      connectionString: CADENA,
-      ssl: CADENA.includes("localhost") || CADENA.includes("/") ? false : { rejectUnauthorized: false },
-      max: 3,
-    });
-  }
-  return pool;
-}
+export { hayBaseDeDatos };
 
 export async function prepararEsquema(): Promise<void> {
   if (!hayBaseDeDatos) return;

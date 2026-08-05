@@ -73,15 +73,21 @@ funcione antes de montar nada.
 
 **Para activar la publicación desde el panel:**
 
-1. En Vercel: **Storage → Create Database → Postgres**. Al vincularla al
-   proyecto, Vercel inyecta `POSTGRES_URL` solo.
+1. En Vercel: **Storage → Create Database**. Vercel ya no tiene un Postgres
+   propio; ofrece los del marketplace. **Supabase o Neon valen igual**: lo
+   único que importa es que al vincular la base al proyecto inyecte
+   `POSTGRES_URL`. Compruébalo en Environment Variables.
 2. También en **Storage → Create → Blob**, para las fotos. Al vincularlo
    inyecta `BLOB_READ_WRITE_TOKEN` solo.
 3. En **Settings → Environment Variables**, añade `ADMIN_TOKEN` con una
    contraseña larga que te inventes.
-4. Redespliega.
+4. Redespliega. Las variables solo entran en despliegues nuevos.
 
-La tabla se crea sola en la primera consulta.
+Las tablas se crean solas en la primera consulta.
+
+> El proveedor da igual mientras hable Postgres. La conexión está en
+> `src/lib/postgres.server.ts`, en un solo sitio, y va cifrada con todo lo que
+> no sea `localhost` o un socket Unix.
 
 Después, en `/interno/publicar`: pegas el enlace y el texto del anuncio,
 se rellena la ficha, subes las fotos, la revisas y publicas. Las unidades
