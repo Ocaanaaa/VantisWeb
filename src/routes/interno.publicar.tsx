@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { parsearAnuncio, generarSlug, type FichaExtraida } from "../lib/parsearAnuncio";
 import { comprimirImagen, type FotoLista } from "../lib/comprimirImagen";
+import { leerRespuesta } from "../lib/leerRespuesta";
 import { copy } from "../content";
 import type { Unidad } from "../lib/unidades";
 
@@ -77,7 +78,7 @@ function Publicar() {
         headers: { "x-vantis-token": token },
         body: cuerpo,
       });
-      const datos = await res.json();
+      const datos = await leerRespuesta(res);
       if (!res.ok) {
         setAvisoFoto(datos.error ?? `Error ${res.status}`);
       } else {
@@ -134,7 +135,7 @@ function Publicar() {
         headers: { "content-type": "application/json", "x-vantis-token": token },
         body: JSON.stringify({ unidad, publicada }),
       });
-      const datos = await res.json();
+      const datos = await leerRespuesta(res);
       if (!res.ok) setEstado({ tipo: "error", texto: datos.error ?? `Error ${res.status}` });
       else setEstado({ tipo: "ok", texto: publicada ? `Publicada en /unidades/${datos.slug}` : "Guardada como borrador" });
     } catch (e) {

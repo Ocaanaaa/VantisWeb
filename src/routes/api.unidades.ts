@@ -31,8 +31,17 @@ export const Route = createFileRoute("/api/unidades")({
     handlers: {
       GET: async ({ request }) => {
         if (!autorizado(request)) return json({ error: "No autorizado" }, 401);
-        const { listarTodas, hayBaseDeDatos } = await import("../lib/unidades.server");
-        return json({ hayBaseDeDatos, unidades: await listarTodas() });
+        try {
+          const { listarTodas, hayBaseDeDatos } = await import("../lib/unidades.server");
+          return json({ hayBaseDeDatos, unidades: await listarTodas() });
+        } catch (e) {
+          console.error(e);
+          const err = e as { message?: string; code?: string };
+          return json(
+            { error: `La base de datos no responde: ${err.message ?? String(e)}`, codigo: err.code },
+            500,
+          );
+        }
       },
 
       POST: async ({ request }) => {

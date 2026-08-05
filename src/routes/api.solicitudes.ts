@@ -114,9 +114,21 @@ export const Route = createFileRoute("/api/solicitudes")({
 
       GET: async ({ request }) => {
         if (!autorizado(request)) return json({ error: "No autorizado" }, 401);
-        const { listarSolicitudes, hayBaseDeDatos } = await import("../lib/solicitudes.server");
-        const { hayCorreo } = await import("../lib/avisoCorreo.server");
-        return json({ hayBaseDeDatos, hayCorreo, solicitudes: await listarSolicitudes() });
+        // Si la consulta lanza y no se recoge aquí, el framework responde con
+        // su página de error en HTML, el panel intenta leerla como JSON y lo
+        // único que se ve es «Unexpected token '<'». Que salga el error real.
+        try {
+          const { listarSolicitudes, hayBaseDeDatos } = await import("../lib/solicitudes.server");
+          const { hayCorreo } = await import("../lib/avisoCorreo.server");
+          return json({ hayBaseDeDatos, hayCorreo, solicitudes: await listarSolicitudes() });
+        } catch (e) {
+          console.error(e);
+          const err = e as { message?: string; code?: string };
+          return json(
+            { error: `La base de datos no responde: ${err.message ?? String(e)}`, codigo: err.code },
+            500,
+          );
+        }
       },
 
       PATCH: async ({ request }) => {

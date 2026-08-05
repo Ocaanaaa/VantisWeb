@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { leerRespuesta } from "../lib/leerRespuesta";
 import type { Solicitud } from "../lib/solicitudes";
 
 /**
@@ -45,7 +46,7 @@ function Solicitudes() {
     setEstado(null);
     try {
       const res = await fetch("/api/solicitudes", { headers: { "x-vantis-token": token } });
-      const datos = await res.json();
+      const datos = await leerRespuesta(res);
       if (!res.ok) {
         setEstado(datos.error ?? `Error ${res.status}`);
         setLista(null);
