@@ -82,14 +82,29 @@ function deRespaldo(): Unidad[] {
   }));
 }
 
-/** Solo las publicadas. Es lo que ve el visitante. */
+/**
+ * Solo las publicadas. Es lo que ve el visitante.
+ *
+ * Si la base de datos falla, **no se cae la web**: se sirven las del archivo y
+ * se deja el error en el registro. Antes esto tumbaba la portada y el sitemap
+ * con un 500, que es una forma absurda de perder todas las visitas porque una
+ * consulta no responda. Un catálogo desactualizado es mucho menos malo que un
+ * sitio caído.
+ *
+ * Las escrituras no llevan este trato: ahí un fallo tiene que verse.
+ */
 export async function listarPublicadas(): Promise<Unidad[]> {
   if (!hayBaseDeDatos) return deRespaldo();
-  await prepararEsquema();
-  const { rows } = await conexion().query(
-    "select * from unidades where publicada = true order by creada desc",
-  );
-  return rows.map(aUnidad);
+  try {
+    await prepararEsquema();
+    const { rows } = await conexion().query(
+      "select * from unidades where publicada = true order by creada desc",
+    );
+    return rows.map(aUnidad);
+  } catch (e) {
+    console.error("[unidades] la base de datos ha fallado, se sirve el respaldo:", e);
+    return deRespaldo();
+  }
 }
 
 /** Todas, publicadas o no. Para el panel interno. */
@@ -102,12 +117,17 @@ export async function listarTodas(): Promise<Array<Unidad & { publicada: boolean
 
 export async function obtenerPorSlug(slug: string): Promise<Unidad | null> {
   if (!hayBaseDeDatos) return deRespaldo().find((u) => u.slug === slug) ?? null;
-  await prepararEsquema();
-  const { rows } = await conexion().query(
-    "select * from unidades where slug = $1 and publicada = true limit 1",
-    [slug],
-  );
-  return rows[0] ? aUnidad(rows[0]) : null;
+  try {
+    await prepararEsquema();
+    const { rows } = await conexion().query(
+      "select * from unidades where slug = $1 and publicada = true limit 1",
+      [slug],
+    );
+    return rows[0] ? aUnidad(rows[0]) : null;
+  } catch (e) {
+    console.error("[unidades] fallo al buscar la ficha, se sirve el respaldo:", e);
+    return deRespaldo().find((u) => u.slug === slug) ?? null;
+  }
 }
 
 export async function guardar(u: Unidad, publicada: boolean): Promise<void> {

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiEstadoRouteImport } from './routes/api.estado'
 import { Route as ApiSolicitudesRouteImport } from './routes/api.solicitudes'
 import { Route as ApiSubirRouteImport } from './routes/api.subir'
 import { Route as ApiUnidadesRouteImport } from './routes/api.unidades'
@@ -32,6 +33,11 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEstadoRoute = ApiEstadoRouteImport.update({
+  id: '/api/estado',
+  path: '/api/estado',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiSolicitudesRoute = ApiSolicitudesRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/estado': typeof ApiEstadoRoute
   '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/estado': typeof ApiEstadoRoute
   '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/estado': typeof ApiEstadoRoute
   '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/estado'
     | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/estado'
     | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/estado'
     | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiEstadoRoute: typeof ApiEstadoRoute
   ApiSolicitudesRoute: typeof ApiSolicitudesRoute
   ApiSubirRoute: typeof ApiSubirRoute
   ApiUnidadesRoute: typeof ApiUnidadesRoute
@@ -168,6 +181,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/estado': {
+      id: '/api/estado'
+      path: '/api/estado'
+      fullPath: '/api/estado'
+      preLoaderRoute: typeof ApiEstadoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/solicitudes': {
@@ -219,6 +239,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiEstadoRoute: ApiEstadoRoute,
   ApiSolicitudesRoute: ApiSolicitudesRoute,
   ApiSubirRoute: ApiSubirRoute,
   ApiUnidadesRoute: ApiUnidadesRoute,

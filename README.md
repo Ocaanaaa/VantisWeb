@@ -65,6 +65,26 @@ muere en un segundo con `The specified Root Directory does not exist`.
 
 Después de importar, cada push a `main` redespliega solo.
 
+## Si algo no va: `/api/estado`
+
+```bash
+curl https://tu-dominio/api/estado -H "x-vantis-token: TU_ADMIN_TOKEN"
+```
+
+Dice qué variables están puestas, a qué servidor apunta `POSTGRES_URL` y qué
+responde Postgres en cada paso, **con el mensaje de error tal cual**. No
+devuelve ningún valor secreto: de las variables solo si existen, y de la
+conexión solo servidor y puerto.
+
+Existe porque desde fuera un fallo de base de datos y uno de configuración se
+parecen demasiado, y los registros de Vercel no siempre están a mano.
+
+> **Si la web se ve pero sin los últimos cambios**, mira en Vercel →
+> Deployments si hay un *rollback* activo: la insignia `Production` en azul con
+> una flecha circular sobre un despliegue viejo. Con eso puesto, cada push se
+> construye pero no se promociona. Se suelta con **Promote to Production** en
+> el despliegue más reciente.
+
 ## Publicar unidades
 
 Las unidades se sirven desde Postgres si hay `POSTGRES_URL`; si no, desde
