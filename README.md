@@ -65,7 +65,10 @@ muere en un segundo con `The specified Root Directory does not exist`.
 
 Después de importar, cada push a `main` redespliega solo.
 
-## Si algo no va: `/api/estado`
+## Si algo no va: `/interno/estado`
+
+Abre esa página, pega el `ADMIN_TOKEN` y dale a Comprobar. Lo mismo desde la
+terminal:
 
 ```bash
 curl https://tu-dominio/api/estado -H "x-vantis-token: TU_ADMIN_TOKEN"
@@ -111,6 +114,17 @@ Las tablas se crean solas en la primera consulta.
 > El proveedor da igual mientras hable Postgres. La conexión está en
 > `src/lib/postgres.server.ts`, en un solo sitio, y va cifrada con todo lo que
 > no sea `localhost` o un socket Unix.
+>
+> Ahí se le quita el `sslmode` a la cadena de conexión antes de usarla. No es
+> capricho: `pg` mezcla lo que trae la cadena **encima** de las opciones que se
+> le pasan, así que el `?sslmode=require` con el que viene la de Supabase pisa
+> la configuración de TLS y la conexión muere con «self-signed certificate in
+> certificate chain».
+>
+> La conexión va cifrada pero **no se verifica el certificado del servidor**:
+> los Postgres gestionados usan cadenas firmadas por su propia CA, que no está
+> en el almacén de la función. Para verificarlo de verdad habría que traerse el
+> certificado raíz del proveedor y pasarlo como `ca`.
 
 Después, en `/interno/publicar`: pegas el enlace y el texto del anuncio,
 se rellena la ficha, subes las fotos, la revisas y publicas. Las unidades

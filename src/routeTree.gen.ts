@@ -16,6 +16,7 @@ import { Route as ApiEstadoRouteImport } from './routes/api.estado'
 import { Route as ApiSolicitudesRouteImport } from './routes/api.solicitudes'
 import { Route as ApiSubirRouteImport } from './routes/api.subir'
 import { Route as ApiUnidadesRouteImport } from './routes/api.unidades'
+import { Route as InternoEstadoRouteImport } from './routes/interno.estado'
 import { Route as InternoPublicarRouteImport } from './routes/interno.publicar'
 import { Route as InternoSolicitudesRouteImport } from './routes/interno.solicitudes'
 import { Route as UnidadesSlugRouteImport } from './routes/unidades.$slug'
@@ -55,6 +56,11 @@ const ApiUnidadesRoute = ApiUnidadesRouteImport.update({
   path: '/api/unidades',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InternoEstadoRoute = InternoEstadoRouteImport.update({
+  id: '/interno/estado',
+  path: '/interno/estado',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InternoPublicarRoute = InternoPublicarRouteImport.update({
   id: '/interno/publicar',
   path: '/interno/publicar',
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
+  '/interno/estado': typeof InternoEstadoRoute
   '/interno/publicar': typeof InternoPublicarRoute
   '/interno/solicitudes': typeof InternoSolicitudesRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
@@ -91,6 +98,7 @@ export interface FileRoutesByTo {
   '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
+  '/interno/estado': typeof InternoEstadoRoute
   '/interno/publicar': typeof InternoPublicarRoute
   '/interno/solicitudes': typeof InternoSolicitudesRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
@@ -104,6 +112,7 @@ export interface FileRoutesById {
   '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
+  '/interno/estado': typeof InternoEstadoRoute
   '/interno/publicar': typeof InternoPublicarRoute
   '/interno/solicitudes': typeof InternoSolicitudesRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
@@ -118,6 +127,7 @@ export interface FileRouteTypes {
     | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
+    | '/interno/estado'
     | '/interno/publicar'
     | '/interno/solicitudes'
     | '/unidades/$slug'
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
+    | '/interno/estado'
     | '/interno/publicar'
     | '/interno/solicitudes'
     | '/unidades/$slug'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
+    | '/interno/estado'
     | '/interno/publicar'
     | '/interno/solicitudes'
     | '/unidades/$slug'
@@ -155,6 +167,7 @@ export interface RootRouteChildren {
   ApiSolicitudesRoute: typeof ApiSolicitudesRoute
   ApiSubirRoute: typeof ApiSubirRoute
   ApiUnidadesRoute: typeof ApiUnidadesRoute
+  InternoEstadoRoute: typeof InternoEstadoRoute
   InternoPublicarRoute: typeof InternoPublicarRoute
   InternoSolicitudesRoute: typeof InternoSolicitudesRoute
   UnidadesSlugRoute: typeof UnidadesSlugRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiUnidadesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interno/estado': {
+      id: '/interno/estado'
+      path: '/interno/estado'
+      fullPath: '/interno/estado'
+      preLoaderRoute: typeof InternoEstadoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/interno/publicar': {
       id: '/interno/publicar'
       path: '/interno/publicar'
@@ -243,6 +263,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiSolicitudesRoute: ApiSolicitudesRoute,
   ApiSubirRoute: ApiSubirRoute,
   ApiUnidadesRoute: ApiUnidadesRoute,
+  InternoEstadoRoute: InternoEstadoRoute,
   InternoPublicarRoute: InternoPublicarRoute,
   InternoSolicitudesRoute: InternoSolicitudesRoute,
   UnidadesSlugRoute: UnidadesSlugRoute,
