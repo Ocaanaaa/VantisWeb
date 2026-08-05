@@ -1,9 +1,10 @@
 import { useState } from "react";
+import { useSearch } from "@tanstack/react-router";
 import { copy } from "../content";
 import { submitOrder, whatsappHref, type Order } from "../lib/submitOrder";
 
-const EMPTY: Order = { spec: "", budget: "", timing: "", contact: "" };
-type Key = keyof Order;
+const EMPTY = { spec: "", budget: "", timing: "", contact: "" };
+type Key = keyof typeof EMPTY;
 
 /**
  * Un solo paso, cuatro campos. Sin <form> con envío nativo: el estado se
@@ -11,10 +12,20 @@ type Key = keyof Order;
  */
 export default function OrderForm() {
   const { form } = copy;
-  const [values, setValues] = useState<Order>(EMPTY);
+  const [values, setValues] = useState(EMPTY);
   const [touched, setTouched] = useState<Partial<Record<Key, boolean>>>({});
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [ref, setRef] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Campo trampa: no se ve, así que solo lo rellenan los robots.
+  const [trampa, setTrampa] = useState("");
+  // Unidad de la que viene el cliente, si ha llegado desde una ficha.
+  //
+  // Por el router y no por window.location: al pulsar «Contactar» desde una
+  // ficha, la navegación es del lado del cliente, así que leer location en un
+  // efecto de montaje da la anterior. Esto además funciona en el servidor.
+  const busqueda = useSearch({ strict: false }) as { unidad?: string };
+  const unidad = typeof busqueda.unidad === "string" ? busqueda.unidad.slice(0, 120) : null;
 
   const set = (k: Key) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setValues((v) => ({ ...v, [k]: e.target.value }));
@@ -29,9 +40,16 @@ export default function OrderForm() {
       return;
     }
     setStatus("sending");
-    const res = await submitOrder(values);
-    if (res.ok) { setRef(res.ref ?? null); setStatus("sent"); setValues(EMPTY); setTouched({}); }
-    else setStatus("error");
+    setError(null);
+    const res = await submitOrder({ ...values, unit: unidad ?? undefined, honeypot: trampa } as Order);
+    if (res.ok) {
+      setRef(res.ref ?? null); setStatus("sent"); setValues(EMPTY); setTouched({});
+    } else {
+      // El mensaje del servidor está escrito para el cliente y dice qué hacer;
+      // el genérico solo se usa si no ha llegado ninguno.
+      setError(res.error ?? null);
+      setStatus("error");
+    }
   };
 
   return (
@@ -51,6 +69,12 @@ export default function OrderForm() {
               </div>
             ) : (
               <div className="space-y-7">
+                {unidad ? (
+                  <p className="border-l-2 border-port pl-4 font-mono text-[11px] leading-[1.6] text-bone/70">
+                    Sobre la unidad <span className="text-port">{unidad}</span>. Va con el encargo;
+                    cuéntanos abajo qué buscas exactamente.
+                  </p>
+                ) : null}
                 <Field n="01" id="spec" as="textarea" label={form.fields.spec.label} placeholder={form.fields.spec.placeholder} value={values.spec} onChange={set("spec")} onBlur={blur("spec")} invalid={Boolean(touched.spec) && !values.spec.trim()} required={form.required} />
                 <Field n="02" id="budget" label={form.fields.budget.label} placeholder={form.fields.budget.placeholder} value={values.budget} onChange={set("budget")} onBlur={blur("budget")} invalid={Boolean(touched.budget) && !values.budget.trim()} required={form.required} />
                 <Field n="03" id="timing" label={form.fields.timing.label} placeholder={form.fields.timing.placeholder} value={values.timing} onChange={set("timing")} onBlur={blur("timing")} invalid={Boolean(touched.timing) && !values.timing.trim()} required={form.required} />
@@ -64,7 +88,20 @@ export default function OrderForm() {
                     {status === "sending" ? form.sending : form.submit}
                     <span className="inline-block h-px w-6 bg-port-ink transition-all duration-300 group-hover:w-9" />
                   </button>
-                  {status === "error" ? <p role="alert" className="font-mono text-[11px] text-port">{form.error}</p> : null}
+                  {status === "error" ? (
+                    <p role="alert" className="max-w-[42ch] font-mono text-[11px] leading-[1.6] text-port">
+                      {error ?? form.error}
+                    </p>
+                  ) : null}
+                </div>
+
+                {/* Campo trampa. Fuera de la vista y fuera del tabulador, pero
+                    sin display:none: hay robots que se saltan lo que está
+                    oculto del todo. aria-hidden lo aparta de los lectores. */}
+                <div aria-hidden="true" className="absolute left-[-9999px] h-px w-px overflow-hidden">
+                  <label htmlFor="empresa">Empresa</label>
+                  <input id="empresa" name="empresa" type="text" tabIndex={-1} autoComplete="off"
+                    value={trampa} onChange={(e) => setTrampa(e.target.value)} />
                 </div>
               </div>
             )}

@@ -85,8 +85,11 @@ export default function Available({ unidades }: { unidades: Unidad[] }) {
                   >
                     {available.more}
                   </Link>
+                  {/* Con la referencia de la unidad, para que el encargo diga
+                      de cuál sale. Recarga la página, y es el precio de que el
+                      formulario lo sepa sin montar un canal aparte. */}
                   <a
-                    href="#encargo"
+                    href={`/?unidad=${encodeURIComponent(`${u.id} · ${u.model}`)}#encargo`}
                     className="inline-flex items-center justify-center border border-graphite px-3 py-3.5 text-center font-mono text-[10px] uppercase tracking-label text-graphite transition-colors duration-300 hover:bg-graphite hover:text-bone"
                   >
                     {available.contact}

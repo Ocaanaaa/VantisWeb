@@ -136,7 +136,7 @@ propia muestran un marcador.
 
 ```
 src/site/        Las secciones de la página, una por archivo
-src/routes/      Home, ficha de unidad, panel interno, API, robots y sitemap
+src/routes/      Home, ficha de unidad, paneles internos, API, robots y sitemap
 src/content/     TODO el texto (copy.es.ts) y el manifiesto de assets
 src/lib/         Capa de datos, analizador de anuncios y utilidades
 src/styles.css   Paleta y tipografía (tokens de Tailwind v4)
@@ -154,10 +154,43 @@ texto propio, así que para cambiar la web no hace falta tocar componentes.
 - `costs.rows`: el arancel figura al 6,5%; para turismos importados a la UE
   suele ser el 10%. Confirmar con la gestoría.
 
-## Formulario
+## Encargos del formulario
 
-`src/lib/submitOrder.ts` es el único punto de salida. Sin la variable
-`VITE_ORDER_ENDPOINT` configurada no envía a ningún sitio: da el envío por
-bueno en el navegador y muestra la confirmación. Para recibir los encargos de
-verdad, define esa variable en Vercel apuntando a un endpoint que acepte POST
-con JSON.
+El formulario envía a `/api/solicitudes`, que guarda el encargo en Postgres y
+avisa por correo. Se leen en **`/interno/solicitudes`** con el mismo
+`ADMIN_TOKEN`: se filtran por estado, se marcan como atendidas o descartadas y
+admiten notas internas. No se borran — son el registro de con quién has
+hablado.
+
+Cada encargo recibe una referencia (`VNT-26-0001`) que se le enseña al cliente
+en pantalla. Si llega desde la ficha de una unidad o desde el botón
+«Contactar» de una tarjeta, el encargo guarda **de qué unidad venía**.
+
+### Aviso por correo
+
+Opcional. Con estas variables, cada encargo llega también al buzón:
+
+| Variable | Para qué |
+|---|---|
+| `RESEND_API_KEY` | La clave de [Resend](https://resend.com) |
+| `NOTIFY_EMAIL` | A dónde se avisa. Admite varios separados por coma |
+| `NOTIFY_FROM` | Remitente. Por defecto `onboarding@resend.dev`, que solo entrega al dueño de la cuenta hasta que verifiques un dominio |
+
+**El correo es un aviso, no el registro.** El encargo se guarda antes de
+intentar enviarlo, y si el correo falla no se pierde nada: sigue en
+`/interno/solicitudes`. Sin estas variables no se avisa y hay que entrar a
+mirar.
+
+### Sin base de datos
+
+El endpoint responde 503 y el formulario enseña el mensaje con la salida por
+WhatsApp. **Antes daba una confirmación falsa** —«Encargo enviado», con
+referencia y todo— sin mandar nada a ningún sitio. Eso ya no pasa: si no se
+puede registrar, se dice.
+
+### Contra el spam
+
+Tres frenos, porque el endpoint es público: tope de longitud por campo, un
+campo trampa que los robots rellenan y las personas no ven, y un límite de 5
+encargos por IP y hora contado en la base de datos (en memoria no serviría,
+cada petición puede caer en una instancia distinta de la función).

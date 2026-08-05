@@ -153,8 +153,11 @@ function UnitPage() {
               </div>
 
               <div className="mt-8 flex flex-col gap-3">
+                {/* Se lleva la referencia de la unidad para que el encargo
+                    diga de dónde viene. Sin esto llega un encargo suelto y no
+                    se sabe qué coche estaba mirando el cliente. */}
                 <a
-                  href="/#encargo"
+                  href={`/?unidad=${encodeURIComponent(`${unit.id} · ${unit.model}`)}#encargo`}
                   className="group inline-flex items-center justify-between gap-3 bg-graphite px-6 py-4 font-mono text-[11px] uppercase tracking-label text-bone transition-transform duration-300 hover:-translate-y-0.5"
                 >
                   {d.askCta}

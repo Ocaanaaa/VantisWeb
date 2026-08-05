@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ApiSolicitudesRouteImport } from './routes/api.solicitudes'
 import { Route as ApiSubirRouteImport } from './routes/api.subir'
 import { Route as ApiUnidadesRouteImport } from './routes/api.unidades'
 import { Route as InternoPublicarRouteImport } from './routes/interno.publicar'
+import { Route as InternoSolicitudesRouteImport } from './routes/interno.solicitudes'
 import { Route as UnidadesSlugRouteImport } from './routes/unidades.$slug'
 
 const IndexRoute = IndexRouteImport.update({
@@ -32,6 +34,11 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiSolicitudesRoute = ApiSolicitudesRouteImport.update({
+  id: '/api/solicitudes',
+  path: '/api/solicitudes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiSubirRoute = ApiSubirRouteImport.update({
   id: '/api/subir',
   path: '/api/subir',
@@ -47,6 +54,11 @@ const InternoPublicarRoute = InternoPublicarRouteImport.update({
   path: '/interno/publicar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InternoSolicitudesRoute = InternoSolicitudesRouteImport.update({
+  id: '/interno/solicitudes',
+  path: '/interno/solicitudes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UnidadesSlugRoute = UnidadesSlugRouteImport.update({
   id: '/unidades/$slug',
   path: '/unidades/$slug',
@@ -57,18 +69,22 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
   '/interno/publicar': typeof InternoPublicarRoute
+  '/interno/solicitudes': typeof InternoSolicitudesRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
   '/interno/publicar': typeof InternoPublicarRoute
+  '/interno/solicitudes': typeof InternoSolicitudesRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
 }
 export interface FileRoutesById {
@@ -76,9 +92,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/api/solicitudes': typeof ApiSolicitudesRoute
   '/api/subir': typeof ApiSubirRoute
   '/api/unidades': typeof ApiUnidadesRoute
   '/interno/publicar': typeof InternoPublicarRoute
+  '/interno/solicitudes': typeof InternoSolicitudesRoute
   '/unidades/$slug': typeof UnidadesSlugRoute
 }
 export interface FileRouteTypes {
@@ -87,27 +105,33 @@ export interface FileRouteTypes {
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
     | '/interno/publicar'
+    | '/interno/solicitudes'
     | '/unidades/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
     | '/interno/publicar'
+    | '/interno/solicitudes'
     | '/unidades/$slug'
   id:
     | '__root__'
     | '/'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/api/solicitudes'
     | '/api/subir'
     | '/api/unidades'
     | '/interno/publicar'
+    | '/interno/solicitudes'
     | '/unidades/$slug'
   fileRoutesById: FileRoutesById
 }
@@ -115,9 +139,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiSolicitudesRoute: typeof ApiSolicitudesRoute
   ApiSubirRoute: typeof ApiSubirRoute
   ApiUnidadesRoute: typeof ApiUnidadesRoute
   InternoPublicarRoute: typeof InternoPublicarRoute
+  InternoSolicitudesRoute: typeof InternoSolicitudesRoute
   UnidadesSlugRoute: typeof UnidadesSlugRoute
 }
 
@@ -144,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/solicitudes': {
+      id: '/api/solicitudes'
+      path: '/api/solicitudes'
+      fullPath: '/api/solicitudes'
+      preLoaderRoute: typeof ApiSolicitudesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/subir': {
       id: '/api/subir'
       path: '/api/subir'
@@ -165,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InternoPublicarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/interno/solicitudes': {
+      id: '/interno/solicitudes'
+      path: '/interno/solicitudes'
+      fullPath: '/interno/solicitudes'
+      preLoaderRoute: typeof InternoSolicitudesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/unidades/$slug': {
       id: '/unidades/$slug'
       path: '/unidades/$slug'
@@ -179,9 +219,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiSolicitudesRoute: ApiSolicitudesRoute,
   ApiSubirRoute: ApiSubirRoute,
   ApiUnidadesRoute: ApiUnidadesRoute,
   InternoPublicarRoute: InternoPublicarRoute,
+  InternoSolicitudesRoute: InternoSolicitudesRoute,
   UnidadesSlugRoute: UnidadesSlugRoute,
 }
 export const routeTree = rootRouteImport
