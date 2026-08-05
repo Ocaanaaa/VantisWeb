@@ -77,8 +77,11 @@ funcione antes de montar nada.
    propio; ofrece los del marketplace. **Supabase o Neon valen igual**: lo
    único que importa es que al vincular la base al proyecto inyecte
    `POSTGRES_URL`. Compruébalo en Environment Variables.
-2. También en **Storage → Create → Blob**, para las fotos. Al vincularlo
-   inyecta `BLOB_READ_WRITE_TOKEN` solo.
+2. También en **Storage → Create → Blob**, para las fotos. Vincularlo inyecta
+   `BLOB_STORE_ID`, pero **no siempre el token de escritura**: comprueba que
+   existe `BLOB_READ_WRITE_TOKEN` y, si no, créalo en el propio almacén
+   (pestaña de tokens, uno de lectura y escritura) y añádelo a mano. Sin él la
+   subida de fotos no funciona y el panel lo dice.
 3. En **Settings → Environment Variables**, añade `ADMIN_TOKEN` con una
    contraseña larga que te inventes.
 4. Redespliega. Las variables solo entran en despliegues nuevos.
@@ -107,6 +110,12 @@ marcador de foto pendiente.
 
 En local, define `MEDIA_DIR=public/media/subidas` y las fotos van a disco en
 vez de a Blob. Esa carpeta está en `.gitignore`.
+
+> **No uses el SDK `@vercel/blob` aquí.** Al importarlo busca un token en la
+> configuración local del CLI de Vercel, y esa cadena de dependencias
+> (`xdg-app-paths`) usa `require`, que no existe dentro del bundle ESM de la
+> función: revienta al cargarse, con token o sin él. La subida llama a la
+> misma API por HTTP, que son treinta líneas y ninguna dependencia.
 
 > **Estas rutas internas no tienen usuarios ni sesiones.** `ADMIN_TOKEN` es un
 > secreto compartido que impide escrituras de fuera, y `/interno/*` es

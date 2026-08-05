@@ -27,8 +27,9 @@ export const Route = createFileRoute("/api/subir")({
     handlers: {
       GET: async ({ request }) => {
         if (!autorizado(request)) return json({ error: "No autorizado" }, 401);
-        const { destino } = await import("../lib/almacenFotos.server");
-        return json({ destino });
+        // Solo qué variables existen, nunca su valor.
+        const { destino, diagnostico } = await import("../lib/almacenFotos.server");
+        return json({ destino, ...diagnostico });
       },
 
       POST: async ({ request }) => {
