@@ -100,11 +100,15 @@ funcione antes de montar nada.
    propio; ofrece los del marketplace. **Supabase o Neon valen igual**: lo
    único que importa es que al vincular la base al proyecto inyecte
    `POSTGRES_URL`. Compruébalo en Environment Variables.
-2. También en **Storage → Create → Blob**, para las fotos. Vincularlo inyecta
-   `BLOB_STORE_ID`, pero **no siempre el token de escritura**: comprueba que
-   existe `BLOB_READ_WRITE_TOKEN` y, si no, créalo en el propio almacén
-   (pestaña de tokens, uno de lectura y escritura) y añádelo a mano. Sin él la
-   subida de fotos no funciona y el panel lo dice.
+2. También en **Storage → Create → Blob**, para las fotos. Dos cosas que es
+   fácil equivocar, y las dos pasaron montando esto:
+   - **Crea el almacén con acceso público.** Uno privado rechaza la subida con
+     `Cannot use public access on a private store`, y aunque la aceptara, las
+     fotos no cargarían en la ficha ni en el portal donde pegues el anuncio.
+   - Al vincularlo, **marca la casilla «Add a read-write token env var»**. Sin
+     ella Vercel inyecta `BLOB_STORE_ID` y `BLOB_WEBHOOK_PUBLIC_KEY` pero no
+     `BLOB_READ_WRITE_TOKEN`, que es el único que hace falta. Si ya existen las
+     otras dos, bórralas antes de reconectar o dará conflicto de nombres.
 3. En **Settings → Environment Variables**, añade `ADMIN_TOKEN` con una
    contraseña larga que te inventes.
 4. Redespliega. Las variables solo entran en despliegues nuevos.

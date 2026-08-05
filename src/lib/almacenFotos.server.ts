@@ -115,6 +115,21 @@ async function subirABlob(nombre: string, datos: ArrayBuffer, tipo: string): Pro
 
   if (!res.ok) {
     const detalle = await res.text().catch(() => "");
+
+    // Un almacén privado no sirve aquí: las fotos de una unidad tienen que
+    // poder verse sin credenciales, tanto en la ficha como en el portal donde
+    // se pegue el anuncio. Se avisa de lo que hay que hacer, porque el mensaje
+    // de Vercel dice qué pasa pero no cómo salir de ello.
+    if (/private (store|access)/i.test(detalle)) {
+      throw new Error(
+        "El almacén de Blob está configurado como privado, y las fotos de una " +
+          "unidad tienen que ser públicas: si no, no cargan en la ficha ni en " +
+          "coches.net. Crea un almacén de Blob con acceso público, vincúlalo al " +
+          "proyecto marcando la casilla del token de lectura y escritura, y " +
+          "redespliega.",
+      );
+    }
+
     throw new Error(
       `Vercel Blob ha respondido ${res.status}. ${
         res.status === 403
